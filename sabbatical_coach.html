@@ -1208,12 +1208,13 @@
 
       <div class="card mb-6">
         <div class="card-title">☁️ Supabase Cloud Sync <span id="syncBadge" class="sync-badge sync-off"><span class="sync-dot"></span>Not configured</span></div>
-        <p class="text-sm text-muted mb-4" style="line-height:1.6;margin-bottom:16px;">Optional cloud backup — your data syncs to Supabase so it's available on any device. Works offline without it.</p>
+        <p class="text-sm text-muted mb-4" style="line-height:1.6;margin-bottom:16px;">Cloud sync keeps your workouts, AI key, and settings in sync across all your devices.</p>
+        <div style="background:rgba(14,158,118,0.06);border:1px solid rgba(14,158,118,0.2);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.75;">
+          <strong style="color:var(--text);">What syncs automatically:</strong> workout logs, session notes, calendar overrides, Anthropic API key, model, equipment, chat history, Garmin data.<br>
+          <strong style="color:var(--text);">Enter once per device:</strong> Supabase URL + key below — these are your cloud credentials and can't be stored in the cloud itself.
+        </div>
         <div style="background:var(--card2);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.7;">
-          <strong style="color:var(--text)">Setup (2 min):</strong><br>
-          1. Create free project at <a href="https://supabase.com" target="_blank" style="color:var(--accent)">supabase.com</a><br>
-          2. In SQL Editor, run the schema from CLAUDE.md (workouts + app_state tables)<br>
-          3. Go to Project Settings → API → copy Project URL and anon key below
+          <strong style="color:var(--text)">New device setup:</strong> Enter your Supabase URL + key → hit Test Connection → your API key and all settings will load automatically.
         </div>
         <div class="form-group">
           <label class="form-label">Supabase Project URL</label>
@@ -2253,8 +2254,21 @@ async function testSupabaseConnection() {
     const client = window.supabase.createClient(url, key);
     const { error } = await client.from('workouts').select('date_key').limit(1);
     if (error) throw error;
-    if (msg) { msg.textContent = '✓ Connected!'; msg.style.color = 'var(--success)'; }
+    // Save these creds into state and reinitialize so loadFromSupabase can run
+    if (!state.settings) state.settings = {};
+    state.settings.supabaseUrl = url;
+    state.settings.supabaseKey = key;
+    saveState();
+    initSupabase();
+    if (msg) { msg.textContent = 'Connected — loading your data…'; msg.style.color = 'var(--success)'; }
     updateSyncBadge('ok', 'Connected');
+    await loadFromSupabase();
+    saveState();
+    // Refresh UI with loaded data
+    if (state.currentTab === 'calendar') renderCalendar();
+    if (state.currentTab === 'history') renderHistoryDynamic();
+    loadSettings(); // refresh settings form with synced values (e.g. API key)
+    if (msg) { msg.textContent = '✓ Connected and synced!'; setTimeout(() => { if(msg) msg.textContent=''; }, 4000); }
   } catch(e) {
     if (msg) { msg.textContent = '✗ ' + (e.message || 'Connection failed'); msg.style.color = 'var(--warn)'; }
     updateSyncBadge('err', 'Error');
@@ -2275,11 +2289,15 @@ async function syncToSupabase(showMsg) {
     if (workoutRows.length > 0) {
       await supabaseClient.from('workouts').upsert(workoutRows, { onConflict: 'user_id,date_key' });
     }
-    // Sync garmin + chat
+    // Sync garmin, chat, overrides, and settings
+    // Note: supabaseUrl + supabaseKey are excluded from settings sync — they're the
+    // bootstrap credentials and must be entered manually on each new device.
+    const { supabaseUrl: _u, supabaseKey: _k, ...settingsToSync } = state.settings || {};
     const stateRows = [
       { user_id:'marko', key:'garmin_activities', value: state.garminActivities || [] },
-      { user_id:'marko', key:'chat_history', value: state.chatHistory || [] },
-      { user_id:'marko', key:'overrides', value: state.overrides || {} }
+      { user_id:'marko', key:'chat_history',      value: state.chatHistory || [] },
+      { user_id:'marko', key:'overrides',         value: state.overrides || {} },
+      { user_id:'marko', key:'settings',          value: settingsToSync }
     ];
     await supabaseClient.from('app_state').upsert(stateRows, { onConflict: 'user_id,key' });
     updateSyncBadge('ok', 'Synced');
@@ -2308,8 +2326,16 @@ async function loadFromSupabase() {
     if (stateRes.data) {
       for (const row of stateRes.data) {
         if (row.key === 'garmin_activities') state.garminActivities = row.value;
-        if (row.key === 'chat_history') state.chatHistory = row.value;
-        if (row.key === 'overrides') state.overrides = { ...state.overrides, ...row.value };
+        if (row.key === 'chat_history')      state.chatHistory = row.value;
+        if (row.key === 'overrides')         state.overrides = { ...state.overrides, ...row.value };
+        if (row.key === 'settings' && row.value) {
+          // Restore all synced settings; keep local Supabase creds (they're the bootstrap)
+          state.settings = {
+            ...row.value,
+            supabaseUrl: state.settings?.supabaseUrl || '',
+            supabaseKey: state.settings?.supabaseKey || ''
+          };
+        }
       }
     }
     saveState();
@@ -2798,7 +2824,7 @@ async function sendMessage() {
   input.value = '';
   autoResize(input);
 
-  const apiKey = localStorage.getItem('marko_api_key') || '';
+  const apiKey = state.settings?.apiKey || localStorage.getItem('marko_api_key') || '';
   if (!apiKey) {
     addMessage('ai', "I'd love to help, but I need an API key to respond. Head to the **Settings** tab and add your Anthropic API key — it's stored locally on your device and only used to talk to the Anthropic API. Takes 30 seconds!");
     return;
@@ -2968,7 +2994,8 @@ function updateWeekSummary() {
 // ====================== SETTINGS ======================
 function loadSettings() {
   const s = state.settings || {};
-  document.getElementById('apiKeyInput').value = localStorage.getItem('marko_api_key') || '';
+  // Prefer state.settings.apiKey; fall back to old separate localStorage key for migration
+  document.getElementById('apiKeyInput').value = s.apiKey || localStorage.getItem('marko_api_key') || '';
   document.getElementById('sabbaticalStart').value = s.sabbaticalStart || '';
   document.getElementById('userName').value = s.userName || 'Marko';
   document.getElementById('modelSelect').value = s.model || 'claude-sonnet-4-6';
@@ -2987,10 +3014,11 @@ function loadSettings() {
 
 function saveSettings() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (apiKey) localStorage.setItem('marko_api_key', apiKey);
-  else localStorage.removeItem('marko_api_key');
+  // Migrate: remove old separate localStorage key if it exists
+  localStorage.removeItem('marko_api_key');
 
   state.settings = {
+    apiKey: apiKey,
     sabbaticalStart: document.getElementById('sabbaticalStart').value,
     userName: document.getElementById('userName').value || 'Marko',
     model: document.getElementById('modelSelect').value,
