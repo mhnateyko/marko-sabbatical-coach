@@ -3046,6 +3046,7 @@ function saveSettings() {
   };
   saveState();
   initSupabase();
+  syncToSupabase(false); // push settings (incl. API key) to cloud immediately
 
   const msg = document.getElementById('savedMsg');
   msg.style.display = 'inline';
@@ -3124,15 +3125,18 @@ async function init() {
 
   updateWeekSummary();
 
-  // Pull latest from Supabase in background (non-blocking)
+  // Pull latest from Supabase in background, then push local state back up.
+  // The push ensures any locally-migrated API key or settings reach the cloud
+  // even if the user never explicitly clicks Save Settings.
   if (supabaseClient) {
     loadFromSupabase().then(() => {
       buildActivityTable();
       renderCalendar();
       renderHistoryDynamic();
       updateWeekSummary();
-      checkApiKey(); // re-check now that settings may have loaded from cloud
-      if (state.currentTab === 'settings') loadSettings(); // refresh form if open
+      checkApiKey();
+      if (state.currentTab === 'settings') loadSettings();
+      syncToSupabase(false); // push migrated/local state back up to Supabase
     });
   }
 }
