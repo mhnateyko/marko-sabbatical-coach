@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marko's Sabbatical Coach</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0c10;
+    --card: #13151c;
+    --card2: #1a1d27;
+    --border: #252836;
+    --accent: #00d4aa;
+    --accent2: #0095ff;
+    --text: #e2e5f0;
+    --muted: #6b7280;
+    --push: #ff6b6b;
+    --pull: #4ecdc4;
+    --legs: #ffe66d;
+    --cardio: #a8e6cf;
+    --other: #c3a6ff;
+    --success: #22c55e;
+    --warn: #f59e0b;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+  html { overflow-x: hidden; }
+
+  /* HEADER */
+  .header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .tagline { font-size: 12px; color: var(--muted); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .sabbatical-badge { background: linear-gradient(135deg, #1a2f3a, #0f2030); border: 1px solid var(--accent); color: var(--accent); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .settings-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* NAV TABS */
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); display: flex; padding: 0 24px; overflow-x: auto; }
+  .nav-tab { padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* TABS */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .stat-value { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .stat-sub { font-size: 11px; color: var(--accent); margin-top: 3px; }
+  .stat-card.accent-push .stat-value { color: var(--push); }
+  .stat-card.accent-pull .stat-value { color: var(--pull); }
+  .stat-card.accent-legs .stat-value { color: var(--legs); }
+  .stat-card.accent-cardio .stat-value { color: var(--cardio); }
+
+  /* CHARTS GRID */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-container { position: relative; height: 250px; }
+  .chart-container-sm { position: relative; height: 200px; }
+
+  @media (max-width: 768px) {
+    .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* SECTION HEADER */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .section-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* PLAN TAB */
+  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .equipment-list { list-style: none; }
+  .equipment-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .equipment-item:last-child { border-bottom: none; }
+  .eq-rank { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #000; flex-shrink: 0; margin-top: 2px; }
+  .eq-name { font-weight: 600; font-size: 14px; }
+  .eq-reason { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .eq-price { font-size: 11px; color: var(--accent); margin-top: 2px; }
+
+  /* PHASE TIMELINE */
+  .phase-timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+  .phase-card { background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: relative; overflow: hidden; }
+  .phase-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .phase-card.p1::before { background: var(--cardio); }
+  .phase-card.p2::before { background: var(--accent); }
+  .phase-card.p3::before { background: var(--push); }
+  .phase-weeks { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .phase-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .phase-goal { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .phase-focus { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .focus-tag { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+  /* WEEK TEMPLATE */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin: 16px 0; }
+  .day-card { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; text-align: center; }
+  .day-name { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+  .day-type { font-size: 12px; font-weight: 600; }
+  .day-type.push { color: var(--push); }
+  .day-type.pull { color: var(--pull); }
+  .day-type.legs { color: var(--legs); }
+  .day-type.cardio { color: var(--cardio); }
+  .day-type.rest { color: var(--muted); }
+  .day-type.flex { color: var(--other); }
+  .day-emoji { font-size: 18px; margin: 4px 0; }
+  .day-detail { font-size: 10px; color: var(--muted); line-height: 1.4; margin-top: 4px; }
+
+  /* WORKOUT TEMPLATE */
+  .workout-template { margin-bottom: 20px; }
+  .wt-header { display: flex; align-items: center; gap: 10px; padding: 14px; background: var(--card2); border-radius: 8px 8px 0 0; border: 1px solid var(--border); border-bottom: none; cursor: pointer; }
+  .wt-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .wt-title { font-weight: 700; font-size: 15px; }
+  .wt-chevron { margin-left: auto; color: var(--muted); transition: transform 0.2s; font-size: 12px; }
+  .wt-header.open .wt-chevron { transform: rotate(180deg); }
+  .wt-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; display: none; }
+  .wt-body.open { display: block; }
+  .ex-row { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: start; }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-name { font-size: 13px; font-weight: 600; }
+  .ex-sets { font-size: 12px; color: var(--accent); font-weight: 700; }
+  .ex-notes { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .ex-equiv { font-size: 10px; color: #4ecdc4; margin-top: 2px; background: rgba(78,205,196,0.1); padding: 2px 6px; border-radius: 3px; display: inline-block; }
+
+  /* AI COACH */
+  .ai-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; height: calc(100vh - 200px); min-height: 500px; }
+  .chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .ai-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .ai-name { font-weight: 700; font-size: 15px; }
+  .ai-status { font-size: 11px; color: var(--success); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .message { max-width: 85%; }
+  .message.user { align-self: flex-end; }
+  .message.ai { align-self: flex-start; }
+  .msg-bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+  .message.user .msg-bubble { background: linear-gradient(135deg, #1a3a2a, #0f2a1a); border: 1px solid rgba(0,212,170,0.3); color: var(--text); border-bottom-right-radius: 4px; }
+  .message.ai .msg-bubble { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .message.user .msg-time { text-align: right; }
+  .chat-input-area { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .quick-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 16px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+  .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .input-row { display: flex; gap: 10px; }
+  .chat-input { flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-size: 14px; resize: none; height: 48px; transition: border-color 0.2s; font-family: inherit; }
+  .chat-input:focus { outline: none; border-color: var(--accent); }
+  .send-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; border: none; border-radius: 8px; padding: 12px 20px; cursor: pointer; font-weight: 700; font-size: 14px; transition: opacity 0.2s; white-space: nowrap; }
+  .send-btn:hover { opacity: 0.9; }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .api-warning { padding: 12px 16px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; font-size: 13px; color: var(--warn); margin-bottom: 12px; }
+  .api-warning a { color: var(--accent); text-decoration: none; cursor: pointer; }
+
+  /* SIDE PANEL */
+  .side-panel { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .side-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .context-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .context-item:last-child { border-bottom: none; }
+  .context-label { color: var(--muted); }
+  .context-value { font-weight: 600; color: var(--text); }
+
+  /* TODAY TAB */
+  .today-header { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .today-date { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .today-workout-name { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+  .today-desc { font-size: 14px; color: var(--muted); }
+  .progress-bar-wrap { margin-top: 16px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; }
+
+  .exercise-list { display: flex; flex-direction: column; gap: 10px; }
+  .exercise-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; align-items: flex-start; gap: 14px; transition: border-color 0.2s; }
+  .exercise-item.completed { border-color: var(--success); background: rgba(34,197,94,0.04); }
+  .ex-checkbox { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all 0.2s; }
+  .ex-checkbox.checked { background: var(--success); border-color: var(--success); }
+  .ex-checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: 800; }
+  .ex-info { flex: 1; }
+  .ex-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+  .ex-prescription { font-size: 13px; color: var(--accent); margin-bottom: 4px; font-weight: 600; }
+  .ex-instruction { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .log-input { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 12px; width: 120px; margin-top: 8px; }
+  .log-input:focus { outline: none; border-color: var(--accent); }
+  .complete-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: 700; font-size: 14px; margin-top: 20px; width: 100%; transition: opacity 0.2s; }
+  .complete-btn:hover { opacity: 0.9; }
+
+  .log-note-area { margin-top: 20px; }
+  .log-note-area textarea { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text); font-size: 14px; resize: vertical; min-height: 80px; font-family: inherit; }
+  .log-note-area textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* SETTINGS */
+  .settings-form { max-width: 600px; }
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+  .form-input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-size: 14px; transition: border-color 0.2s; }
+  .form-input:focus { outline: none; border-color: var(--accent); }
+  .form-help { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .save-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; border: none; border-radius: 8px; padding: 12px 28px; cursor: pointer; font-weight: 700; font-size: 14px; transition: opacity 0.2s; }
+  .save-btn:hover { opacity: 0.9; }
+  .saved-msg { color: var(--success); font-size: 13px; margin-left: 10px; display: none; }
+
+  /* ACTIVITY LOG TABLE */
+  .activity-table { width: 100%; border-collapse: collapse; }
+  .activity-table th { text-align: left; padding: 10px 12px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .activity-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(37,40,54,0.5); }
+  .activity-table tr:last-child td { border-bottom: none; }
+  .activity-type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-running { background: rgba(168,230,207,0.2); color: var(--cardio); }
+  .badge-strength { background: rgba(255,107,107,0.2); color: var(--push); }
+  .badge-cycling { background: rgba(0,149,255,0.2); color: var(--accent2); }
+  .badge-hiking { background: rgba(255,230,109,0.2); color: var(--legs); }
+
+  /* UTILITY */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .mb-4 { margin-bottom: 16px; }
+  .mb-6 { margin-bottom: 24px; }
+  .text-accent { color: var(--accent); }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 13px; }
+  .font-bold { font-weight: 700; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-2 { gap: 8px; }
+  .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(34,197,94,0.2); color: var(--success); }
+  .badge-blue { background: rgba(0,149,255,0.2); color: var(--accent2); }
+
+  /* TYPING INDICATOR */
+  .typing { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+  .typing span { width: 8px; height: 8px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)} }
+
+  .msg-bubble pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+  .msg-bubble strong { color: var(--accent); }
+
+  .workout-complete-banner { background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(0,212,170,0.1)); border: 1px solid var(--success); border-radius: 10px; padding: 16px 20px; text-align: center; margin-top: 16px; display: none; }
+  .workout-complete-banner.show { display: block; }
+
+  /* OG PROGRESSION ROWS */
+  .prog-row { padding: 7px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .prog-row:last-child { border-bottom: none; }
+  .prog-row.done { color: var(--muted); }
+  .prog-row.current { color: var(--text); font-weight: 700; background: rgba(0,212,170,0.08); margin: 2px -14px; padding: 8px 14px; border-radius: 4px; }
+  .prog-row.future { color: #4a5568; }
+  .prog-std { font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .prog-row.current .prog-std { color: var(--accent); }
+
+  /* CALENDAR */
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-nav-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-title { font-size: 16px; font-weight: 700; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: 12px; overflow: hidden; }
+  .cal-header-cell { background: var(--card2); padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .cal-cell { background: var(--card); padding: 10px 8px; min-height: 90px; cursor: pointer; transition: background 0.15s; position: relative; }
+  .cal-cell:hover { background: var(--card2); }
+  .cal-cell.today { background: rgba(0,212,170,0.06); }
+  .cal-cell.today .cal-day-num { color: var(--accent); font-weight: 800; }
+  .cal-cell.other-month { background: rgba(0,0,0,0.2); }
+  .cal-cell.other-month .cal-day-num { color: #333; }
+  .cal-day-num { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .cal-workout-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: 700; display: block; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-badge-push { background: rgba(255,107,107,0.2); color: var(--push); }
+  .cal-badge-pull { background: rgba(78,205,196,0.2); color: var(--pull); }
+  .cal-badge-legs { background: rgba(255,230,109,0.2); color: var(--legs); }
+  .cal-badge-cardio { background: rgba(168,230,207,0.2); color: var(--cardio); }
+  .cal-badge-flex { background: rgba(195,166,255,0.2); color: var(--other); }
+  .cal-badge-rest { background: rgba(107,114,128,0.2); color: var(--muted); }
+  .cal-status { position: absolute; top: 8px; right: 8px; font-size: 14px; }
+  .cal-note-preview { font-size: 10px; color: var(--muted); line-height: 1.3; margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .cal-week-label { background: var(--card2); border-bottom: 1px solid var(--border); padding: 8px 16px; font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; border-radius: 8px 8px 0 0; }
+
+  /* WORKOUT TRACKER (full per-set logging) */
+  .tracker-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px; }
+  .tracker-back { background: none; border: none; color: var(--accent); font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .tracker-date { font-size: 13px; color: var(--muted); }
+  .tracker-wname { font-size: 22px; font-weight: 800; margin: 4px 0; }
+  .tracker-og-note { font-size: 12px; color: var(--muted); background: var(--card2); border-radius: 6px; padding: 8px 12px; margin-top: 10px; line-height: 1.5; }
+
+  .tracker-exercise { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+  .tracker-ex-header { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; background: var(--card2); }
+  .tracker-ex-type { font-size: 9px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; margin-top: 2px; flex-shrink: 0; }
+  .type-skill { background: rgba(0,212,170,0.15); color: var(--accent); }
+  .type-strength { background: rgba(255,107,107,0.15); color: var(--push); }
+  .type-accessory { background: rgba(107,114,128,0.15); color: var(--muted); }
+  .type-prehab { background: rgba(34,197,94,0.15); color: var(--success); }
+  .type-core { background: rgba(0,149,255,0.15); color: var(--accent2); }
+  .tracker-ex-name { font-size: 15px; font-weight: 700; }
+  .tracker-ex-target { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .tracker-ex-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+  .set-table { width: 100%; padding: 12px 16px; }
+  .set-row { display: grid; grid-template-columns: 32px 1fr 1fr 1fr 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .set-num { font-size: 12px; color: var(--muted); font-weight: 700; text-align: center; }
+  .set-label { font-size: 10px; color: var(--muted); text-align: center; padding-bottom: 4px; }
+  .set-input { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 14px; font-weight: 600; text-align: center; width: 100%; transition: border-color 0.2s; }
+  .set-input:focus { outline: none; border-color: var(--accent); }
+  .set-input.filled { border-color: rgba(0,212,170,0.4); background: rgba(0,212,170,0.05); }
+  .set-done-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; color: var(--muted); }
+  .set-done-btn.done { background: var(--success); border-color: var(--success); color: white; }
+  .add-set-btn { background: none; border: 1px dashed var(--border); color: var(--muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%; margin-top: 4px; transition: all 0.2s; }
+  .add-set-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .tracker-progress { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .tracker-prog-bar { flex: 1; height: 4px; background: var(--card2); border-radius: 2px; overflow: hidden; }
+  .tracker-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.3s; }
+  .tracker-finish-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; border: none; border-radius: 8px; padding: 12px 24px; cursor: pointer; font-weight: 800; font-size: 14px; width: 100%; margin-top: 16px; transition: opacity 0.2s; }
+  .tracker-finish-btn:hover { opacity: 0.9; }
+
+  .substitution-bar { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 16px 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .sub-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .sub-input { flex: 1; min-width: 200px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 13px; }
+  .sub-input:focus { outline: none; border-color: var(--accent); }
+  .sub-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; white-space: nowrap; transition: all 0.2s; }
+  .sub-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 768px) {
+    /* HEADER */
+    .header { padding: 10px 14px; }
+    .logo { font-size: 17px; }
+    .tagline { display: none; }
+    .sabbatical-badge { font-size: 11px; padding: 5px 10px; }
+    .settings-btn { display: none; }
+
+    /* NAV — scrollable pill row */
+    .nav { padding: 0 8px; gap: 0; -webkit-overflow-scrolling: touch; }
+    .nav-tab { padding: 12px 14px; font-size: 13px; }
+
+    /* MAIN */
+    .main { padding: 12px; }
+
+    /* GRIDS → single column */
+    .ai-layout { grid-template-columns: 1fr; height: auto; }
+    .side-panel { display: none; }
+    .plan-grid { grid-template-columns: 1fr; }
+    .phase-timeline { grid-template-columns: 1fr; }
+    .week-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+    /* CALENDAR — compact but still 7 cols */
+    .cal-grid { grid-template-columns: repeat(7, 1fr); }
+    .cal-header-cell { padding: 6px 2px; font-size: 9px; letter-spacing: 0; }
+    .cal-cell { min-height: 64px; padding: 5px 3px; cursor: pointer; -webkit-tap-highlight-color: rgba(0,212,170,0.15); }
+    .cal-day-num { font-size: 11px; margin-bottom: 3px; }
+    .cal-workout-badge { font-size: 9px; padding: 2px 4px; }
+    .cal-note-preview { display: none; }
+    .cal-status { font-size: 11px; top: 4px; right: 4px; }
+    .cal-title { font-size: 14px; }
+    .cal-nav-btn { padding: 8px 12px; font-size: 13px; }
+
+    /* TRACKER */
+    .tracker-header { padding: 14px 16px; }
+    .tracker-wname { font-size: 18px; }
+    .tracker-back { font-size: 13px; }
+
+    /* SET ROWS — bigger touch targets */
+    .set-row { grid-template-columns: 26px 1fr 1fr 1fr 36px; gap: 5px; margin-bottom: 10px; }
+    .set-input { padding: 10px 6px; font-size: 16px; /* prevent iOS zoom */ border-radius: 8px; }
+    .set-done-btn { width: 36px; height: 36px; font-size: 14px; }
+    .set-label { font-size: 9px; }
+
+    /* CHAT */
+    .chat-panel { height: 70vh; min-height: 400px; }
+    .chat-input { font-size: 16px; /* prevent iOS zoom on focus */ }
+    .quick-prompts { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+    .quick-btn { flex-shrink: 0; padding: 7px 12px; font-size: 12px; }
+    .send-btn { padding: 12px 16px; }
+
+    /* EXERCISE ITEMS */
+    .exercise-item { padding: 12px; gap: 10px; }
+    .ex-title { font-size: 14px; }
+    .tracker-ex-name { font-size: 14px; }
+
+    /* SUBSTITUTION BAR */
+    .substitution-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .sub-input { min-width: unset; font-size: 16px; }
+
+    /* ACTIVITY TABLE — hide less important cols on mobile */
+    .activity-table th:nth-child(4),
+    .activity-table td:nth-child(4),
+    .activity-table th:nth-child(5),
+    .activity-table td:nth-child(5) { display: none; }
+
+    /* SETTINGS */
+    .settings-form { max-width: 100%; }
+
+    /* CARDS */
+    .card { padding: 14px; }
+    .stat-value { font-size: 22px; }
+    .section-title { font-size: 16px; }
+
+    /* TRACKER FINISH BTN */
+    .tracker-finish-btn { padding: 16px; font-size: 16px; }
+    .add-set-btn { padding: 12px; font-size: 13px; }
+  }
+
+  /* Extra small phones */
+  @media (max-width: 380px) {
+    .cal-cell { min-height: 54px; padding: 3px 2px; }
+    .cal-day-num { font-size: 10px; }
+    .cal-workout-badge { display: none; }
+    .nav-tab { padding: 10px 10px; font-size: 12px; }
+    .set-row { grid-template-columns: 22px 1fr 1fr 1fr 34px; gap: 3px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="logo">⚡ MARKO'S COACH</div>
+      <div class="tagline">Sabbatical Edition — Anywhere, Anytime</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sabbatical-badge" id="dayCounter">🌍 Sabbatical Mode</div>
+    <button class="settings-btn" onclick="switchTab('settings')">⚙ Settings</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-tab active" onclick="switchTab('history')">📊 History</div>
+  <div class="nav-tab" onclick="switchTab('plan')">🗺 Plan</div>
+  <div class="nav-tab" onclick="switchTab('calendar')">📅 Calendar</div>
+  <div class="nav-tab" onclick="switchTab('today')">💪 Workout</div>
+  <div class="nav-tab" onclick="switchTab('coach')">🤖 AI Coach</div>
+  <div class="nav-tab" onclick="switchTab('settings')">⚙ Settings</div>
+</nav>
+
+<div class="main">
+
+  <!-- ======== HISTORY TAB ======== -->
+  <div id="tab-history" class="tab-content active">
+    <div class="section-header mb-6">
+      <div>
+        <div class="section-title">Your Training Foundation</div>
+        <div class="section-sub">Oct 2024 – Apr 2026 · 17 months of data</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">110</div>
+        <div class="stat-label">Gym Sessions</div>
+        <div class="stat-sub">Since Oct 2024</div>
+      </div>
+      <div class="stat-card accent-push">
+        <div class="stat-value">165<span style="font-size:16px">lb</span></div>
+        <div class="stat-label">Peak Bench Press</div>
+        <div class="stat-sub">Bodyweight: ~175 pushups equiv.</div>
+      </div>
+      <div class="stat-card accent-legs">
+        <div class="stat-value">195<span style="font-size:16px">lb</span></div>
+        <div class="stat-label">Peak Squat</div>
+        <div class="stat-sub">→ Pistol squat capable</div>
+      </div>
+      <div class="stat-card accent-legs">
+        <div class="stat-value">450<span style="font-size:16px">lb</span></div>
+        <div class="stat-label">Peak Leg Press</div>
+        <div class="stat-sub">Strong legs for adventures</div>
+      </div>
+      <div class="stat-card accent-cardio">
+        <div class="stat-value">~9:10</div>
+        <div class="stat-label">Avg Run Pace</div>
+        <div class="stat-sub">min/mile · solid aerobic base</div>
+      </div>
+      <div class="stat-card accent-pull">
+        <div class="stat-value">5×5</div>
+        <div class="stat-label">Pull-Up Baseline</div>
+        <div class="stat-sub">Ready for ring progressions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">~3.5</div>
+        <div class="stat-label">Avg Run Distance</div>
+        <div class="stat-sub">miles · base + threshold work</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">+53%</div>
+        <div class="stat-label">OHP Strength Gain</div>
+        <div class="stat-sub">60→110 lbs machine press</div>
+      </div>
+    </div>
+
+    <div class="charts-grid mb-6">
+      <div class="card">
+        <div class="card-title">Monthly Workout Volume</div>
+        <div class="chart-container">
+          <canvas id="volumeChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Training Type Distribution</div>
+        <div class="chart-container">
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid-3 mb-6">
+      <div class="card">
+        <div class="card-title">Bench Press Progression (lbs)</div>
+        <div class="chart-container-sm">
+          <canvas id="benchChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Squat Progression (lbs)</div>
+        <div class="chart-container-sm">
+          <canvas id="squatChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Shoulder Press Progression (lbs)</div>
+        <div class="chart-container-sm">
+          <canvas id="ohpChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-6">
+      <div class="card">
+        <div class="card-title">Leg Press Progression (lbs)</div>
+        <div class="chart-container-sm">
+          <canvas id="legpressChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Recent Garmin Activities</div>
+        <div style="overflow-x:auto;">
+          <table class="activity-table" id="activityTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-6">
+      <div class="card-title">Training History Analysis & Key Insights</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+        <div>
+          <p class="text-sm" style="line-height:1.7;color:var(--text);">
+            <strong class="text-accent">Strength Foundation:</strong> You built a solid PPL (Push/Pull/Legs) base over 17 months.
+            Your bench peaked at 165 lbs, squat at 195 lbs, and leg press at 450 lbs — exceptional leg strength that will translate
+            directly to hiking, cycling, and any adventure activities on sabbatical.
+          </p>
+          <br>
+          <p class="text-sm" style="line-height:1.7;color:var(--text);">
+            <strong class="text-accent">Training Evolution:</strong> You naturally transitioned from barbell-heavy work (Oct–Nov 2024)
+            to machine/cable-based training, and more recently toward higher-rep, circuit-style work. This is actually
+            <em>perfect</em> preparation for bodyweight training — your body is already adapting to higher reps and functional movement patterns.
+          </p>
+        </div>
+        <div>
+          <p class="text-sm" style="line-height:1.7;color:var(--text);">
+            <strong class="text-accent">Pull-Up Strength:</strong> Your 5×5 pull-up baseline is a huge asset — this directly translates
+            to ring rows, ring pull-ups, and eventually muscle-up progressions. Most gym-goers can't do this.
+          </p>
+          <br>
+          <p class="text-sm" style="line-height:1.7;color:var(--text);">
+            <strong class="text-accent">Cardio Base:</strong> Consistent running (3–5 miles at ~9 min/mile), plus cycling and hiking.
+            Your Garmin data shows you're already training for "boundless energy" — aerobic base is solid. Threshold work at 8:36/mile
+            indicates good VO2 max. You're ready for anything.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PLAN TAB ======== -->
+  <div id="tab-plan" class="tab-content">
+    <div class="section-header mb-6">
+      <div>
+        <div class="section-title">Sabbatical Fitness Plan</div>
+        <div class="section-sub">Gym-to-Anywhere Transition · Strength + Boundless Energy</div>
+      </div>
+    </div>
+
+    <!-- Equipment -->
+    <div class="plan-grid mb-6">
+      <div class="card">
+        <div class="card-title">🎯 Recommended Equipment</div>
+        <p class="text-sm text-muted mb-4" style="line-height:1.6;">High-leverage, low-profile gear. Total investment: ~$100–$180. Fits in a backpack.</p>
+        <ul class="equipment-list">
+          <li class="equipment-item">
+            <div class="eq-rank">1</div>
+            <div>
+              <div class="eq-name">Gymnastics Rings</div>
+              <div class="eq-reason">The single most versatile piece of equipment. Replaces cable rows, dips, push-ups with infinitely adjustable difficulty. Hang from any bar, tree, beam. Enables rows, ring push-ups, dips, support holds, L-sit, and eventually muscle-ups.</div>
+              <div class="eq-price">$25–$50 · Wood rings, 1.5" straps · ~1.5 lbs</div>
+            </div>
+          </li>
+          <li class="equipment-item">
+            <div class="eq-rank">2</div>
+            <div>
+              <div class="eq-name">Pull-Up Bar (Portable/Doorframe)</div>
+              <div class="eq-reason">You already do 5×5 pull-ups — this keeps that movement alive. Pairs with rings for rows. Look for one that can also be used on a door or mounted over a ledge when traveling.</div>
+              <div class="eq-price">$25–$50 doorframe · or use any bar/beam at hotels/parks</div>
+            </div>
+          </li>
+          <li class="equipment-item">
+            <div class="eq-rank">3</div>
+            <div>
+              <div class="eq-name">Push-Up Bars (Rotating)</div>
+              <div class="eq-reason">Protects wrists during high-volume push-up work. Allows deeper ROM than floor push-ups. Rotating handles let you find neutral wrist position. Pairs with ring push-ups for a full push system.</div>
+              <div class="eq-price">$15–$25 · ~0.8 lbs · compact</div>
+            </div>
+          </li>
+          <li class="equipment-item">
+            <div class="eq-rank">4</div>
+            <div>
+              <div class="eq-name">Mini Resistance Bands (set of 3)</div>
+              <div class="eq-reason">Face pulls for shoulder health, band-assisted pull-ups when fatigued, hip activation before lower body work, banded push-ups for extra challenge, lateral band walks. Incredibly versatile for under $20.</div>
+              <div class="eq-price">$15–$20 · ~0.3 lbs · fits in any pocket</div>
+            </div>
+          </li>
+          <li class="equipment-item">
+            <div class="eq-rank">5</div>
+            <div>
+              <div class="eq-name">Ab Wheel (optional)</div>
+              <div class="eq-reason">One of the most brutal core exercises per unit of time. Directly trains anti-extension — important for hiking stability and injury prevention. Very lightweight and compact.</div>
+              <div class="eq-price">$12–$20 · ~0.6 lbs</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔄 Gym → Bodyweight Translation</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div style="background:var(--card2);border-radius:8px;padding:12px;">
+            <div style="font-size:12px;color:var(--push);font-weight:700;margin-bottom:6px;">PUSH MUSCLES (Chest/Shoulders/Triceps)</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+              Bench → Push-ups (decline, wide, narrow, ring push-ups)<br>
+              Incline Bench → Pike push-ups, elevated push-ups<br>
+              Decline Bench → Ring dips, bench dips with feet elevated<br>
+              Shoulder Press → Pike push-ups → Handstand push-up progression<br>
+              Cable Crossover → Ring flyes (harder!), band flyes
+            </div>
+          </div>
+          <div style="background:var(--card2);border-radius:8px;padding:12px;">
+            <div style="font-size:12px;color:var(--pull);font-weight:700;margin-bottom:6px;">PULL MUSCLES (Back/Biceps)</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+              Lat Pulldown → Pull-ups (overhand, close-grip, wide-grip)<br>
+              Rows → Ring rows (feet elevated = harder), inverted rows<br>
+              Reverse Fly → Band pull-aparts, ring reverse fly<br>
+              Bicep Curl → Underhand ring rows, towel curls, band curls
+            </div>
+          </div>
+          <div style="background:var(--card2);border-radius:8px;padding:12px;">
+            <div style="font-size:12px;color:var(--legs);font-weight:700;margin-bottom:6px;">LEGS (Quads/Hamstrings/Glutes/Calves)</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+              Leg Press → Bulgarian split squats, jump squats, wall sits<br>
+              Squat → Pistol squat progression (box → partial → full)<br>
+              Leg Curl → Nordic hamstring curls (ring-assisted), SL RDL<br>
+              Leg Extension → Step-ups, terminal knee extensions (band)<br>
+              Calf Raise → Single-leg calf raise (on step)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase Timeline -->
+    <div class="card mb-6">
+      <div class="card-title">📅 12-Week Program — Overcoming Gravity Phases</div>
+      <div style="background:var(--card2);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--muted);">
+        <strong style="color:var(--accent);">OG Progression Rule:</strong> You advance to the next harder variation only when you can hit <strong style="color:var(--text);">3 sets of 5 clean reps</strong> (strength work) or <strong style="color:var(--text);">3 sets of 8 clean reps</strong> (hypertrophy work) at your current level. Quality over speed — always. Tendons adapt 3–10× slower than muscles. Earn each progression.
+      </div>
+      <div class="phase-timeline">
+        <div class="phase-card p1">
+          <div class="phase-weeks">Weeks 1–4 · OG Foundation</div>
+          <div class="phase-name">🌱 Accumulate</div>
+          <div class="phase-goal">Build quality volume at your current level in all 6 movement patterns. Establish the OG session structure: skill → strength → accessory. Learn hollow body, L-sit holds, and ring row positioning. Zone 2 aerobic base (3×/week).</div>
+          <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
+          <div style="font-size:12px;color:var(--text);">Primary: 3–4 × 5–8 reps &nbsp;·&nbsp; Accessory: 3 × 10–15 reps</div>
+          <div class="phase-focus">
+            <span class="focus-tag badge-green">Hollow Body</span>
+            <span class="focus-tag badge-blue">Ring Rows</span>
+            <span class="focus-tag" style="background:rgba(255,230,109,0.2);color:var(--legs);">Split Squat</span>
+          </div>
+        </div>
+        <div class="phase-card p2">
+          <div class="phase-weeks">Weeks 5–8 · OG Progress</div>
+          <div class="phase-name">⚡ Advance</div>
+          <div class="phase-goal">Move up one level in each pattern where you've hit the rep standard. Introduce ring dips, elevated pike push-ups, box pistols, Nordic negatives, L-sit on bars. Add one threshold run per week.</div>
+          <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
+          <div style="font-size:12px;color:var(--text);">Primary: 4 × 5–8 reps &nbsp;·&nbsp; Add harder variations at 3×3–5 first</div>
+          <div class="phase-focus">
+            <span class="focus-tag badge-green">Ring Dips</span>
+            <span class="focus-tag" style="background:rgba(255,107,107,0.2);color:var(--push);">Wall HSPU</span>
+            <span class="focus-tag" style="background:rgba(255,230,109,0.2);color:var(--legs);">Box Pistol</span>
+          </div>
+        </div>
+        <div class="phase-card p3">
+          <div class="phase-weeks">Weeks 9–12 · OG Peak</div>
+          <div class="phase-name">🔥 Consolidate</div>
+          <div class="phase-goal">Advance to highest earned level. Full wall HSPU, archer rows, L-sit on rings, full pistol squats, partial Nordic curls. Build volume at peak levels. Adventure-ready fitness — all-day hiking, cycling, swimming, climbing.</div>
+          <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
+          <div style="font-size:12px;color:var(--text);">Primary: 4–5 × 5–8 reps &nbsp;·&nbsp; Volume: 25–50 reps/pattern/session</div>
+          <div class="phase-focus">
+            <span class="focus-tag" style="background:rgba(255,107,107,0.2);color:var(--push);">HSPU</span>
+            <span class="focus-tag badge-green">Full Pistol</span>
+            <span class="focus-tag badge-blue">L-sit Rings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Template -->
+    <div class="card mb-6">
+      <div class="card-title">📆 Weekly Template — Flexible Around Adventures</div>
+      <p class="text-sm text-muted mb-4" style="line-height:1.6;">This is a <em>template</em>, not a rigid schedule. If you're hiking all day, that counts as leg day + cardio. If you go mountain biking, that's cardio. Tell your AI Coach what you actually did and it will adapt the plan.</p>
+      <div class="week-grid">
+        <div class="day-card">
+          <div class="day-name">Mon</div>
+          <div class="day-emoji">💪</div>
+          <div class="day-type push">Upper Push</div>
+          <div class="day-detail">Push-ups, Ring Dips, Pike OHP, Core</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Tue</div>
+          <div class="day-emoji">🏃</div>
+          <div class="day-type cardio">Cardio</div>
+          <div class="day-detail">Easy run 3–5 mi or bike or swim</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Wed</div>
+          <div class="day-emoji">🔄</div>
+          <div class="day-type pull">Upper Pull</div>
+          <div class="day-detail">Pull-ups, Ring Rows, Face Pulls, Curls</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Thu</div>
+          <div class="day-emoji">🌍</div>
+          <div class="day-type flex">Adventure</div>
+          <div class="day-detail">Hike, explore, yoga, active recovery</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Fri</div>
+          <div class="day-emoji">🦵</div>
+          <div class="day-type legs">Lower Body</div>
+          <div class="day-detail">Split squats, Nordic curls, Calf raises</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Sat</div>
+          <div class="day-emoji">🚴</div>
+          <div class="day-type cardio">Cardio+</div>
+          <div class="day-detail">Longer effort or adventure activity</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">Sun</div>
+          <div class="day-emoji">😴</div>
+          <div class="day-type rest">Rest</div>
+          <div class="day-detail">Walk, stretch, yoga</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OG Progression Ladders -->
+    <div class="card mb-6">
+      <div class="card-title">🪜 OG Progression Ladders — All 6 Movement Patterns</div>
+      <p class="text-sm text-muted mb-4" style="line-height:1.6;">
+        Based on Steven Low's <em>Overcoming Gravity</em> rating scale. <strong style="color:var(--accent)">Your starting level is marked ★</strong>. Advance only when you hit <strong style="color:var(--text)">3×8 clean reps</strong> at current level (or 3×5 for harder skills). Never skip levels — tendons adapt 3–10× slower than muscles.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <!-- H-Push -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(255,107,107,0.2);padding:10px 14px;font-size:12px;font-weight:700;color:var(--push);">HORIZONTAL PUSH (H-Push)</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row done">✓ Push-up &nbsp;<span class="prog-std">3×12–15</span></div>
+            <div class="prog-row done">✓ Decline Push-up &nbsp;<span class="prog-std">3×12–15</span></div>
+            <div class="prog-row current">★ Ring Push-up &nbsp;<span class="prog-std">3×8 → advance</span></div>
+            <div class="prog-row future">→ Archer Push-up &nbsp;<span class="prog-std">3×5–8</span></div>
+            <div class="prog-row future">→ Ring Dip &nbsp;<span class="prog-std">3×5–8</span></div>
+            <div class="prog-row future">→ L-sit Ring Dip &nbsp;<span class="prog-std">3×5–8</span></div>
+          </div>
+        </div>
+
+        <!-- V-Push -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(255,107,107,0.15);padding:10px 14px;font-size:12px;font-weight:700;color:var(--push);">VERTICAL PUSH (V-Push)</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row done">✓ Pike Push-up &nbsp;<span class="prog-std">3×8–12</span></div>
+            <div class="prog-row current">★ Elevated Pike Push-up &nbsp;<span class="prog-std">3×8 → advance</span></div>
+            <div class="prog-row future">→ Wall Handstand Hold &nbsp;<span class="prog-std">3×30–60s</span></div>
+            <div class="prog-row future">→ Wall HSPU (neg only) &nbsp;<span class="prog-std">3×3–5 negs</span></div>
+            <div class="prog-row future">→ Wall HSPU (full) &nbsp;<span class="prog-std">3×5–8</span></div>
+            <div class="prog-row future">→ Freestanding HSPU &nbsp;<span class="prog-std">3×3–5</span></div>
+          </div>
+        </div>
+
+        <!-- H-Pull -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(78,205,196,0.2);padding:10px 14px;font-size:12px;font-weight:700;color:var(--pull);">HORIZONTAL PULL (H-Pull)</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row done">✓ Inclined Ring Row (45°) &nbsp;<span class="prog-std">3×12–15</span></div>
+            <div class="prog-row current">★ Horizontal Ring Row &nbsp;<span class="prog-std">3×8 → advance</span></div>
+            <div class="prog-row future">→ Ring Row (feet elevated) &nbsp;<span class="prog-std">3×8</span></div>
+            <div class="prog-row future">→ Archer Ring Row &nbsp;<span class="prog-std">3×5–8/side</span></div>
+            <div class="prog-row future">→ One-Arm Row Progression &nbsp;<span class="prog-std">3×5</span></div>
+          </div>
+        </div>
+
+        <!-- V-Pull -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(78,205,196,0.15);padding:10px 14px;font-size:12px;font-weight:700;color:var(--pull);">VERTICAL PULL (V-Pull)</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row done">✓ Pull-up 5×5 (your baseline) &nbsp;<span class="prog-std">3×8 → advance</span></div>
+            <div class="prog-row current">★ Close-grip / Wide Pull-up &nbsp;<span class="prog-std">3×8 → advance</span></div>
+            <div class="prog-row future">→ L-sit Pull-up &nbsp;<span class="prog-std">3×5–8</span></div>
+            <div class="prog-row future">→ Archer Pull-up &nbsp;<span class="prog-std">3×3–5/side</span></div>
+            <div class="prog-row future">→ Weighted Pull-up &nbsp;<span class="prog-std">3×5 (+10–20 lbs)</span></div>
+            <div class="prog-row future">→ One-arm Chin progression &nbsp;<span class="prog-std">long-term</span></div>
+          </div>
+        </div>
+
+        <!-- Core -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(0,212,170,0.15);padding:10px 14px;font-size:12px;font-weight:700;color:var(--accent);">CORE (Anti-extension / Compression)</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row current">★ Hollow Body Hold &nbsp;<span class="prog-std">3×30–60s</span></div>
+            <div class="prog-row current">★ L-sit on Floor &nbsp;<span class="prog-std">3×10–20s → advance</span></div>
+            <div class="prog-row future">→ L-sit on Push-up Bars &nbsp;<span class="prog-std">3×15–30s</span></div>
+            <div class="prog-row future">→ L-sit on Rings &nbsp;<span class="prog-std">3×10–20s</span></div>
+            <div class="prog-row future">→ V-sit &nbsp;<span class="prog-std">3×5–10s</span></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;">Also: Dead bug, Ab wheel rollout (Wk5+)</div>
+          </div>
+        </div>
+
+        <!-- Legs -->
+        <div style="background:var(--card2);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(255,230,109,0.15);padding:10px 14px;font-size:12px;font-weight:700;color:var(--legs);">LEGS + HAMSTRINGS</div>
+          <div style="padding:10px 14px;">
+            <div class="prog-row done">✓ Squat (195 lbs peak) &nbsp;<span class="prog-std">strong base</span></div>
+            <div class="prog-row current">★ Bulgarian Split Squat &nbsp;<span class="prog-std">4×8/leg → advance</span></div>
+            <div class="prog-row future">→ Shrimp Squat &nbsp;<span class="prog-std">3×5–8/leg</span></div>
+            <div class="prog-row future">→ Box Pistol Squat &nbsp;<span class="prog-std">3×5/leg</span></div>
+            <div class="prog-row future">→ Full Pistol Squat &nbsp;<span class="prog-std">3×5/leg</span></div>
+            <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
+            <div class="prog-row current">★ Nordic Curl (negatives) &nbsp;<span class="prog-std">3×3–5 negs</span></div>
+            <div class="prog-row future">→ Nordic Curl (partial) &nbsp;<span class="prog-std">3×5</span></div>
+            <div class="prog-row future">→ Full Nordic Curl &nbsp;<span class="prog-std">3×5–8</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Workout Templates -->
+    <div class="card">
+      <div class="card-title">📋 OG-Structured Workout Templates (Tap to Expand)</div>
+      <div style="background:var(--card2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;">
+        <strong style="color:var(--accent);">OG Session Order:</strong> Skill Work → Primary Strength → Secondary Strength → Hypertrophy/Accessory → Prehab. Always in this order. Skill/technique work needs a fresh nervous system — never put it after heavy lifting.
+      </div>
+
+      <div class="workout-template">
+        <div class="wt-header" onclick="toggleWT(this)">
+          <div class="wt-dot" style="background:var(--push)"></div>
+          <div class="wt-title">💪 Upper Push — OG Structure (35–50 min)</div>
+          <div class="wt-chevron">▼</div>
+        </div>
+        <div class="wt-body">
+          <div class="ex-row" style="background:rgba(255,107,107,0.08);font-size:10px;color:var(--push);font-weight:700;letter-spacing:0.5px;">
+            <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--accent);">
+            <div><div class="ex-name">🎯 SKILL: Wall Handstand Hold</div><div class="ex-equiv">V-Push skill — CNS fresh, do first</div></div>
+            <div class="ex-sets">3 × 20–60s</div>
+            <div class="ex-notes">Kick up to wall, straight body, shoulders shrugged into ears. Not a push — just holding. Builds proprioception for eventual HSPU. Rest 90s between holds.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--push);">
+            <div><div class="ex-name">💪 STRENGTH A: H-Push Progression</div><div class="ex-equiv">Ring push-up → Archer push-up → Ring dip</div></div>
+            <div class="ex-sets">4 × 5–8 reps</div>
+            <div class="ex-notes"><strong>Advance when:</strong> 3×8 at current level. Wk1-4: Ring push-ups (feet on floor). Wk5-8: Archer push-ups. Wk9+: Ring dips. 2–3 min rest between sets.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--push);">
+            <div><div class="ex-name">💪 STRENGTH B: V-Push Progression</div><div class="ex-equiv">Pike push-up → Elevated pike → Wall HSPU neg</div></div>
+            <div class="ex-sets">3 × 5–8 reps</div>
+            <div class="ex-notes">Wk1-4: Elevated pike push-up (feet on chair). Wk5-8: Wall HSPU negatives (5s lower). Wk9+: Full wall HSPU. 2 min rest. This is your OHP replacement.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">📦 ACCESSORY: Push-up Volume</div><div class="ex-equiv">Sub-maximal, hypertrophy rep range</div></div>
+            <div class="ex-sets">3 × 10–15 reps</div>
+            <div class="ex-notes">Standard or decline push-ups. These are your volume work — should feel moderate. Focus on full ROM and a 2-second pause at bottom. 60–90s rest.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">🔵 CORE: L-Sit Progression</div><div class="ex-equiv">Compression strength — all skills need this</div></div>
+            <div class="ex-sets">3 × 10–20s holds</div>
+            <div class="ex-notes">Start: floor L-sit (tuck). Progress: push-up bars → rings. Advance when you hit 3×20s. This is OG's fundamental core builder — more useful than any crunch.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--success);">
+            <div><div class="ex-name">🩺 PREHAB: Band Face Pulls + Scapular Push-ups</div><div class="ex-equiv">Non-negotiable shoulder health</div></div>
+            <div class="ex-sets">3 × 15–20 reps</div>
+            <div class="ex-notes">Face pulls: anchor band at eye height, pull thumbs to ears. Scapular push-ups: protract/retract at bottom of plank. OG emphasizes this prevents most shoulder issues.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-template">
+        <div class="wt-header" onclick="toggleWT(this)">
+          <div class="wt-dot" style="background:var(--pull)"></div>
+          <div class="wt-title">🔄 Upper Pull — OG Structure (35–50 min)</div>
+          <div class="wt-chevron">▼</div>
+        </div>
+        <div class="wt-body">
+          <div class="ex-row" style="background:rgba(78,205,196,0.08);font-size:10px;color:var(--pull);font-weight:700;letter-spacing:0.5px;">
+            <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--accent);">
+            <div><div class="ex-name">🎯 SKILL: Dead Hang + Scapular Pulls</div><div class="ex-equiv">Shoulder prep and straight-arm strength</div></div>
+            <div class="ex-sets">3 × 30–60s hang + 10 scap pulls</div>
+            <div class="ex-notes">Dead hang: full passive hang, relax everything. Scapular pull: from dead hang, depress shoulders without bending elbows — this activates the lats before strength work. Essential OG warm-up.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--pull);">
+            <div><div class="ex-name">💪 STRENGTH A: V-Pull Progression</div><div class="ex-equiv">Pull-up → Close-grip → L-sit pull-up → Archer</div></div>
+            <div class="ex-sets">4 × 5–8 reps</div>
+            <div class="ex-notes">You start at close-grip pull-up. <strong>Advance when:</strong> 3×8. Wk1-4: Vary grip (overhand, close, wide). Wk5-8: L-sit pull-up (tuck first). Wk9+: Archer pull-up or weighted. 2–3 min rest.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--pull);">
+            <div><div class="ex-name">💪 STRENGTH B: H-Pull Progression</div><div class="ex-equiv">Ring row → elevated feet → archer row</div></div>
+            <div class="ex-sets">3 × 8–12 reps</div>
+            <div class="ex-notes">Wk1-4: Horizontal ring row (body parallel to floor). Wk5-8: Feet elevated ring row. Wk9+: Archer ring row (one-arm emphasis). <strong>Advance when:</strong> 3×12 clean. 90s rest.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">📦 ACCESSORY: Ring / Band Curls</div><div class="ex-equiv">Bicep hypertrophy, elbow health</div></div>
+            <div class="ex-sets">3 × 10–15 reps</div>
+            <div class="ex-notes">Underhand ring rows with a short ROM (curl emphasis), or band curls. OG notes bicep work protects elbows under heavy pull loads. 60s rest, moderate effort.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">📦 ACCESSORY: Band Pull-Aparts</div><div class="ex-equiv">Rear delt / horizontal scapular strength</div></div>
+            <div class="ex-sets">3 × 15–20 reps</div>
+            <div class="ex-notes">Band held at chest, pull apart to T position. Crucial for posture and rear delt balance against all the push work. Do these daily if possible — they're nearly impossible to overdo.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--success);">
+            <div><div class="ex-name">🩺 PREHAB: Dislocates + YTW</div><div class="ex-equiv">Shoulder mobility and cuff health</div></div>
+            <div class="ex-sets">2 × 10 reps each</div>
+            <div class="ex-notes">Band dislocates: wide grip, pass band over head front-to-back. YTW: lying face down, raise arms in Y, T, W shapes. OG protocol for bulletproofing the shoulder girdle.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-template">
+        <div class="wt-header" onclick="toggleWT(this)">
+          <div class="wt-dot" style="background:var(--legs)"></div>
+          <div class="wt-title">🦵 Lower Body — OG Structure (40–55 min)</div>
+          <div class="wt-chevron">▼</div>
+        </div>
+        <div class="wt-body">
+          <div class="ex-row" style="background:rgba(255,230,109,0.08);font-size:10px;color:var(--legs);font-weight:700;letter-spacing:0.5px;">
+            <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--accent);">
+            <div><div class="ex-name">🎯 SKILL: Pistol Squat Progression</div><div class="ex-equiv">OG Skill — do first, fresh legs</div></div>
+            <div class="ex-sets">3 × 3–5 / leg</div>
+            <div class="ex-notes">Wk1-4: Sit to a low box, stand up one-legged. Wk5-8: Wall-assisted partial pistol. Wk9+: Full pistol. Your 195-lb squat means you have the strength — just learn the pattern. Rest 90s.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--legs);">
+            <div><div class="ex-name">💪 STRENGTH A: Bulgarian Split Squat</div><div class="ex-equiv">Primary quad/glute builder — replaces leg press</div></div>
+            <div class="ex-sets">4 × 5–8 / leg</div>
+            <div class="ex-notes"><strong>Advance when:</strong> 3×8/leg with BW → add backpack weight → hold heaviest object available. OG principle: train in 5–8 rep range for strength. 2 min rest between legs. Best single-leg exercise in existence.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--legs);">
+            <div><div class="ex-name">💪 STRENGTH B: Nordic Hamstring Curl</div><div class="ex-equiv">Replaces leg curl — OG considers this essential</div></div>
+            <div class="ex-sets">3 × 3–6 negatives</div>
+            <div class="ex-notes">Anchor feet under bed/couch. Tall-kneeling start. Lower yourself in 4–5 sec. Catch with hands, push back up. <strong>Advance when:</strong> 3×6 negatives → partial concentric → full curl. 2 min rest. Injury-prevention gold.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">📦 ACCESSORY: Jump Squats</div><div class="ex-equiv">Power / RFD — OG power development</div></div>
+            <div class="ex-sets">3 × 8–12 reps</div>
+            <div class="ex-notes">Full depth squat, explode to jump. Land softly, reset. Replaces the power output of leg press. OG: power work after strength, not before. Crucial for hiking, running, and all sports. 60–90s rest.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid #666;">
+            <div><div class="ex-name">📦 ACCESSORY: Single-Leg Calf Raise</div><div class="ex-equiv">Calves love daily high volume</div></div>
+            <div class="ex-sets">3 × 20–25 / leg</div>
+            <div class="ex-notes">On a step edge, full ROM down AND up. OG: calves are postural muscles — they handle huge volume. Do daily if possible. Essential for hiking and running injury prevention.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--success);">
+            <div><div class="ex-name">🩺 PREHAB: Hip 90/90 + SL RDL</div><div class="ex-equiv">Hip mobility + posterior chain</div></div>
+            <div class="ex-sets">2 × 60s each side / 3 × 8 SL-RDL</div>
+            <div class="ex-notes">Hip 90/90: sit with both knees at 90°, rotate between internal and external. SL-RDL: hinge on one leg, reaching opposite hand to floor. OG: hip mobility prevents most lower body issues in calisthenics.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-template">
+        <div class="wt-header" onclick="toggleWT(this)">
+          <div class="wt-dot" style="background:var(--cardio)"></div>
+          <div class="wt-title">🏃 Cardio / Energy Systems — OG Aerobic Framework</div>
+          <div class="wt-chevron">▼</div>
+        </div>
+        <div class="wt-body">
+          <div class="ex-row" style="background:rgba(168,230,207,0.08);font-size:10px;color:var(--cardio);font-weight:700;letter-spacing:0.5px;">
+            <div>TYPE</div><div>DURATION / TARGET</div><div>OG / ENERGY SYSTEM PURPOSE</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--cardio);">
+            <div><div class="ex-name">Zone 2 Easy Run / Hike</div><div class="ex-equiv">Aerobic base — do 3×/week minimum</div></div>
+            <div class="ex-sets">30–60 min · HR 130–150</div>
+            <div class="ex-notes">Conversational pace (~9:30–10:30/mile). OG framework: aerobic base is the foundation of ALL recovery and stamina. More Zone 2 = more mitochondria = more "boundless energy." Never skip this.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--warn);">
+            <div><div class="ex-name">Threshold Run (Zone 4)</div><div class="ex-equiv">1×/week max — raises lactate threshold</div></div>
+            <div class="ex-sets">20–35 min · HR 160–175</div>
+            <div class="ex-notes">~8:30–8:50/mile (you've run 8:36). "Comfortably hard" — can say a few words, not a sentence. OG principle: threshold work raises the ceiling of sustainable intensity. Key for all-day adventure stamina.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--accent2);">
+            <div><div class="ex-name">Cycling (any terrain)</div><div class="ex-equiv">Cross-training, legs + aerobic, low impact</div></div>
+            <div class="ex-sets">45–90 min</div>
+            <div class="ex-notes">Mountain biking = adventure cardio + technical skill. Road/gravel = aerobic base with scenery. Great active recovery option. Counts as Zone 2 if easy, Zone 4 if hammering climbs.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--legs);">
+            <div><div class="ex-name">Hiking (with elevation)</div><div class="ex-equiv">Legs + cardio — the whole point of sabbatical</div></div>
+            <div class="ex-sets">2–8 hrs · any pace</div>
+            <div class="ex-notes">OG: classify full-day hikes as a Lower Body + Cardio session — skip leg day the next day. Elevation gain = eccentric quad loading (hiking down = negative squat). Log distance + ascent to track load.</div>
+          </div>
+          <div class="ex-row" style="border-left:3px solid var(--other);">
+            <div><div class="ex-name">Swimming / Water Sports</div><div class="ex-equiv">Full-body, zero-impact recovery + fitness</div></div>
+            <div class="ex-sets">30–60 min</div>
+            <div class="ex-notes">Pull strength (V-pull and H-pull) directly transfers to swimming. Kayaking = horizontal pull. OG: treat open water swimming as a separate skill domain worth developing. Great on hot days.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== CALENDAR TAB ======== -->
+  <div id="tab-calendar" class="tab-content">
+    <div class="section-header mb-6">
+      <div>
+        <div class="section-title" id="calHeading">Training Calendar</div>
+        <div class="section-sub">Click any day to open its workout tracker · Green = complete · Yellow = partial · Gray = rest</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="cal-nav-btn" onclick="calShift(-7)">← Prev Week</button>
+        <button class="cal-nav-btn" onclick="calGoToday()">Today</button>
+        <button class="cal-nav-btn" onclick="calShift(7)">Next Week →</button>
+      </div>
+    </div>
+
+    <div id="calendarContainer"></div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">📊 3-Week Summary</div>
+      <div id="calSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ======== WORKOUT TRACKER TAB ======== -->
+  <div id="tab-today" class="tab-content">
+    <div id="trackerContent"></div>
+  </div>
+
+  <!-- ======== AI COACH TAB ======== -->
+  <div id="tab-coach" class="tab-content">
+    <div class="ai-layout">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div class="ai-name">Coach Claude</div>
+            <div class="ai-status">● Online — Powered by Anthropic</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="message ai">
+            <div class="msg-bubble">
+              Hey Marko! 👋 I'm your AI training coach for the sabbatical. I've been briefed on your entire training history — 110 gym sessions, peak bench of 165 lbs, squat at 195 lbs, and your solid running base at ~9 min/mile.<br><br>
+              Your fitness foundation is <strong>excellent</strong> for what you're about to do. The key now is translating that gym strength into functional, anywhere fitness.<br><br>
+              A few things I can help with:<br>
+              • Update your plan when you do something different than scheduled<br>
+              • Suggest workouts based on your location/equipment<br>
+              • Answer questions about exercise progressions<br>
+              • Track fatigue and suggest recovery<br><br>
+              What's on your mind? Tell me what you did today, or ask me anything!
+            </div>
+            <div class="msg-time">Your personal coach</div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div id="apiWarning" class="api-warning" style="display:none;">
+            ⚠ No API key set. <a onclick="switchTab('settings')">Add your Anthropic API key in Settings</a> to enable AI responses. (Your key is stored locally and never sent anywhere except Anthropic's API.)
+          </div>
+          <div class="quick-prompts">
+            <button class="quick-btn" onclick="sendQuick('I just finished a run instead of my scheduled strength workout')">🏃 Did a run instead</button>
+            <button class="quick-btn" onclick="sendQuick('I went hiking all day, about 6 miles with 1500ft elevation gain')">🥾 Went hiking</button>
+            <button class="quick-btn" onclick="sendQuick('What should I do for today\'s workout if I only have 20 minutes?')">⏱ Only 20 min</button>
+            <button class="quick-btn" onclick="sendQuick('My shoulders are sore — what can I modify today?')">💆 Sore shoulders</button>
+            <button class="quick-btn" onclick="sendQuick('I feel really energized today, can I add more volume?')">⚡ Extra energy</button>
+            <button class="quick-btn" onclick="sendQuick('Suggest a hotel room workout — no equipment at all')">🏨 Hotel room</button>
+          </div>
+          <div class="input-row">
+            <textarea class="chat-input" id="chatInput" placeholder="Tell me what you did, ask for advice, or update your plan..." rows="1" onkeydown="handleEnter(event)" oninput="autoResize(this)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="side-card">
+          <div class="card-title">🏋️ Your Athlete Profile</div>
+          <div class="context-item"><span class="context-label">Bench Peak</span><span class="context-value">165 lbs</span></div>
+          <div class="context-item"><span class="context-label">Squat Peak</span><span class="context-value">195 lbs</span></div>
+          <div class="context-item"><span class="context-label">Leg Press Peak</span><span class="context-value">450 lbs</span></div>
+          <div class="context-item"><span class="context-label">Pull-ups</span><span class="context-value">5×5 BW</span></div>
+          <div class="context-item"><span class="context-label">Run Pace</span><span class="context-value">~9:10/mi</span></div>
+          <div class="context-item"><span class="context-label">Threshold</span><span class="context-value">8:36/mi</span></div>
+          <div class="context-item"><span class="context-label">Gym Sessions</span><span class="context-value">110 total</span></div>
+        </div>
+        <div class="side-card">
+          <div class="card-title">🎒 Equipment</div>
+          <div style="font-size:13px;line-height:1.8;color:var(--text);">
+            ✓ Yoga mat<br>
+            ✓ Elevated surfaces<br>
+            <span id="ringStatus" style="color:var(--muted)">? Gymnastics rings</span><br>
+            <span id="barStatus" style="color:var(--muted)">? Pull-up bar</span><br>
+            <span id="pushupStatus" style="color:var(--muted)">? Push-up bars</span><br>
+            <span id="bandStatus" style="color:var(--muted)">? Resistance bands</span>
+          </div>
+        </div>
+        <div class="side-card">
+          <div class="card-title">📊 This Week</div>
+          <div id="weekSummary" style="font-size:13px;color:var(--muted);line-height:1.8;">Loading...</div>
+        </div>
+        <div class="side-card">
+          <div class="card-title">🎯 Sabbatical Goals</div>
+          <div style="font-size:13px;line-height:1.8;color:var(--text);">
+            💪 Maintain strength<br>
+            ⚡ Boundless energy<br>
+            🌍 Adventure-ready<br>
+            🧘 Mind-body balance<br>
+            🏔 Hike, bike, swim, explore
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== SETTINGS TAB ======== -->
+  <div id="tab-settings" class="tab-content">
+    <div class="section-header mb-6">
+      <div class="section-title">Settings</div>
+    </div>
+    <div class="settings-form">
+      <div class="card mb-6">
+        <div class="card-title">🤖 AI Coach Configuration</div>
+        <div class="form-group">
+          <label class="form-label">Anthropic API Key</label>
+          <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-ant-api03-...">
+          <div class="form-help">Your key is stored only in your browser's local storage (on your computer) and sent only to Anthropic's API. Never shared anywhere else. Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">AI Model</label>
+          <select class="form-input" id="modelSelect">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (Recommended — fast + smart)</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6 (Most powerful)</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Fastest)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card mb-6">
+        <div class="card-title">🌍 Sabbatical Configuration</div>
+        <div class="form-group">
+          <label class="form-label">Sabbatical Start Date</label>
+          <input type="date" class="form-input" id="sabbaticalStart">
+          <div class="form-help">Used to calculate which week of your program you're in</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" class="form-input" id="userName" value="Marko" placeholder="Marko">
+        </div>
+      </div>
+
+      <div class="card mb-6">
+        <div class="card-title">🎒 Available Equipment</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqRings" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Gymnastics Rings</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqBar" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Pull-up Bar</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqPushup" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Push-up Bars</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqBands" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Resistance Bands</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqWheel" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Ab Wheel</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="eqDumbbells" style="width:16px;height:16px;accent-color:var(--accent)">
+            <span class="text-sm">Dumbbells</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card mb-6">
+        <div class="card-title">💡 Best Way to Use This App</div>
+        <div style="font-size:14px;line-height:1.8;color:var(--text);">
+          <p style="margin-bottom:12px;"><strong class="text-accent">Recommendation: Keep this HTML file saved locally.</strong> This is the ideal setup for your sabbatical because:</p>
+          <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:8px;">
+            ✓ <strong style="color:var(--text)">Works offline</strong> — You can view workouts without internet anywhere in the world<br>
+            ✓ <strong style="color:var(--text)">Durable memory</strong> — All your workout logs, chat history, and settings persist in your browser<br>
+            ✓ <strong style="color:var(--text)">AI when connected</strong> — When you have WiFi, the AI Coach calls Anthropic's API directly<br>
+            ✓ <strong style="color:var(--text)">Portable</strong> — Just open the HTML file in any browser, on any device<br>
+            ✓ <strong style="color:var(--text)">No subscription</strong> — Only pay for actual AI messages used (Anthropic API, ~$0.01–0.05/conversation)
+          </p>
+          <p style="color:var(--muted);font-size:13px;line-height:1.7;">
+            <strong style="color:var(--warn)">Backup tip:</strong> Export your data occasionally using the button below, and keep a copy of this HTML file in your cloud storage (iCloud, Google Drive) so you can access it from any device.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="save-btn" onclick="exportData()">📤 Export My Data</button>
+          <button class="settings-btn" onclick="importData()">📥 Import Data</button>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+      <span class="saved-msg" id="savedMsg">✓ Saved!</span>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ====================== DATA ======================
+const WORKOUT_DATA = {
+  monthly_sessions: {"2024-10":{"sessions":3,"types":{"Other":1,"Push/Upper":1,"Pull":1}},"2024-11":{"sessions":11,"types":{"Legs":5,"Push/Upper":3,"Pull":2,"Other":1}},"2024-12":{"sessions":9,"types":{"Pull":1,"Push/Upper":4,"Legs":3,"Other":1}},"2025-01":{"sessions":6,"types":{"Push/Upper":3,"Legs":3}},"2025-02":{"sessions":8,"types":{"Other":2,"Legs":4,"Push/Upper":2}},"2025-03":{"sessions":4,"types":{"Push/Upper":2,"Legs":2}},"2025-04":{"sessions":8,"types":{"Push/Upper":4,"Legs":3,"Other":1}},"2025-05":{"sessions":5,"types":{"Legs":1,"Push/Upper":4}},"2025-06":{"sessions":5,"types":{"Push/Upper":4,"Other":1}},"2025-07":{"sessions":11,"types":{"Other":4,"Push/Upper":3,"Legs":4}},"2025-08":{"sessions":8,"types":{"Push/Upper":5,"Legs":2,"Other":1}},"2025-09":{"sessions":3,"types":{"Push/Upper":2,"Legs":1}},"2025-10":{"sessions":5,"types":{"Push/Upper":3,"Other":2}},"2025-11":{"sessions":8,"types":{"Other":3,"Push/Upper":3,"Legs":2}},"2025-12":{"sessions":3,"types":{"Push/Upper":2,"Legs":1}},"2026-01":{"sessions":4,"types":{"Push/Upper":3,"Other":1}},"2026-02":{"sessions":4,"types":{"Other":4}},"2026-03":{"sessions":5,"types":{"Other":5}}},
+  bench_history: [{"date":"2024-10-30","weight":155.0,"reps":6,"e1rm":186.0},{"date":"2024-11-13","weight":165.0,"reps":4,"e1rm":187.0},{"date":"2024-11-19","weight":165.0,"reps":3,"e1rm":181.5},{"date":"2024-12-03","weight":145.0,"reps":6,"e1rm":174.0},{"date":"2024-12-10","weight":145.0,"reps":6,"e1rm":174.0},{"date":"2024-12-17","weight":135.0,"reps":7,"e1rm":166.5},{"date":"2024-12-23","weight":135.0,"reps":4,"e1rm":153.0},{"date":"2025-01-07","weight":135.0,"reps":5,"e1rm":157.5},{"date":"2025-01-13","weight":135.0,"reps":4,"e1rm":153.0},{"date":"2025-01-25","weight":135.0,"reps":4,"e1rm":153.0},{"date":"2025-02-10","weight":125.0,"reps":5,"e1rm":145.8},{"date":"2025-02-20","weight":125.0,"reps":8,"e1rm":158.3},{"date":"2025-02-25","weight":135.0,"reps":5,"e1rm":157.5},{"date":"2025-03-23","weight":135.0,"reps":6,"e1rm":162.0},{"date":"2025-04-02","weight":135.0,"reps":5,"e1rm":157.5}],
+  squat_history: [{"date":"2024-10-25","weight":185.0,"reps":6,"e1rm":222.0},{"date":"2024-11-02","weight":185.0,"reps":6,"e1rm":222.0},{"date":"2024-11-09","weight":185.0,"reps":6,"e1rm":222.0},{"date":"2024-11-15","weight":185.0,"reps":4,"e1rm":209.7},{"date":"2024-11-23","weight":185.0,"reps":6,"e1rm":222.0},{"date":"2024-11-28","weight":185.0,"reps":6,"e1rm":222.0},{"date":"2024-12-05","weight":175.0,"reps":6,"e1rm":210.0},{"date":"2025-07-01","weight":195.0,"reps":3,"e1rm":214.5},{"date":"2025-07-05","weight":195.0,"reps":3,"e1rm":214.5},{"date":"2025-07-12","weight":185.0,"reps":5,"e1rm":215.8},{"date":"2025-07-21","weight":195.0,"reps":4,"e1rm":221.0}],
+  ohp_history: [{"date":"2024-12-10","weight":60.0,"reps":10,"e1rm":80.0},{"date":"2025-01-07","weight":70.0,"reps":10,"e1rm":93.3},{"date":"2025-03-16","weight":70.0,"reps":10,"e1rm":93.3},{"date":"2025-04-02","weight":80.0,"reps":8,"e1rm":101.3},{"date":"2025-05-18","weight":80.0,"reps":30,"e1rm":160.0},{"date":"2025-07-21","weight":110.0,"reps":8,"e1rm":139.3},{"date":"2025-08-13","weight":110.0,"reps":8,"e1rm":139.3},{"date":"2025-09-09","weight":110.0,"reps":8,"e1rm":139.3},{"date":"2025-11-05","weight":100.0,"reps":8,"e1rm":126.7},{"date":"2026-02-07","weight":105.0,"reps":8,"e1rm":133.0},{"date":"2026-02-18","weight":110.0,"reps":8,"e1rm":139.3},{"date":"2026-03-16","weight":100.0,"reps":8,"e1rm":126.7}],
+  legpress_history: [{"date":"2024-12-14","weight":320.0,"reps":10,"e1rm":426.7},{"date":"2025-01-08","weight":360.0,"reps":8,"e1rm":456.0},{"date":"2025-02-04","weight":410.0,"reps":8,"e1rm":519.3},{"date":"2025-02-11","weight":410.0,"reps":10,"e1rm":546.7},{"date":"2025-03-26","weight":360.0,"reps":15,"e1rm":540.0},{"date":"2025-04-04","weight":410.0,"reps":13,"e1rm":587.7},{"date":"2025-04-19","weight":410.0,"reps":15,"e1rm":615.0},{"date":"2025-05-04","weight":450.0,"reps":10,"e1rm":600.0},{"date":"2025-12-04","weight":360.0,"reps":8,"e1rm":456.0},{"date":"2026-03-16","weight":270.0,"reps":8,"e1rm":342.0}],
+  garmin_activities: [{"date":"2026-04-06","type":"Running","title":"Los Angeles Running","distance":3.01,"calories":342,"avgHR":138,"maxHR":150,"time":"00:28:11","ascent":43},{"date":"2026-04-05","type":"Strength Training","title":"Strength","distance":0.0,"calories":251,"avgHR":116,"maxHR":146,"time":"00:34:17","ascent":0},{"date":"2026-04-05","type":"Cycling","title":"Los Angeles Cycling","distance":10.03,"calories":453,"avgHR":118,"maxHR":162,"time":"01:09:13","ascent":715},{"date":"2026-04-04","type":"Hiking","title":"Los Angeles Hiking","distance":3.53,"calories":471,"avgHR":118,"maxHR":148,"time":"01:12:05","ascent":692},{"date":"2026-04-03","type":"Running","title":"Los Angeles - Base","distance":3.37,"calories":412,"avgHR":154,"maxHR":166,"time":"00:31:04","ascent":43},{"date":"2026-04-02","type":"Running","title":"Los Angeles - Base","distance":5.32,"calories":638,"avgHR":153,"maxHR":166,"time":"00:49:04","ascent":135},{"date":"2026-04-01","type":"Running","title":"Los Angeles Running","distance":3.04,"calories":382,"avgHR":153,"maxHR":169,"time":"00:28:53","ascent":39},{"date":"2026-03-31","type":"Strength Training","title":"Strength","distance":0.0,"calories":273,"avgHR":116,"maxHR":150,"time":"00:36:13","ascent":0},{"date":"2026-03-29","type":"Cycling","title":"Los Angeles Cycling","distance":6.81,"calories":644,"avgHR":138,"maxHR":167,"time":"01:08:52","ascent":1033},{"date":"2026-03-27","type":"Running","title":"Los Angeles - Threshold","distance":4.08,"calories":497,"avgHR":163,"maxHR":186,"time":"00:35:05","ascent":59},{"date":"2026-03-25","type":"Strength Training","title":"Strength","distance":0.0,"calories":410,"avgHR":121,"maxHR":150,"time":"00:52:41","ascent":0},{"date":"2026-03-24","type":"Running","title":"Los Angeles - Base","distance":3.32,"calories":398,"avgHR":150,"maxHR":166,"time":"00:30:05","ascent":66},{"date":"2026-03-23","type":"Running","title":"Los Angeles Running","distance":3.26,"calories":399,"avgHR":150,"maxHR":166,"time":"00:30:33","ascent":56},{"date":"2026-03-20","type":"Strength Training","title":"Strength","distance":0.0,"calories":162,"avgHR":100,"maxHR":131,"time":"00:29:16","ascent":0},{"date":"2026-03-19","type":"Running","title":"Los Angeles - Base","distance":3.61,"calories":456,"avgHR":160,"maxHR":175,"time":"00:32:48","ascent":66},{"date":"2026-03-17","type":"Running","title":"Los Angeles - Threshold","distance":3.98,"calories":501,"avgHR":162,"maxHR":188,"time":"00:35:03","ascent":95},{"date":"2026-03-16","type":"Strength Training","title":"Strength","distance":0.0,"calories":234,"avgHR":107,"maxHR":142,"time":"00:36:19","ascent":0},{"date":"2026-03-12","type":"Running","title":"Los Angeles Running","distance":3.01,"calories":362,"avgHR":149,"maxHR":172,"time":"00:26:49","ascent":72},{"date":"2026-03-11","type":"Running","title":"Los Angeles Running","distance":3.18,"calories":386,"avgHR":144,"maxHR":161,"time":"00:29:45","ascent":59},{"date":"2026-03-08","type":"Running","title":"Los Angeles - Base","distance":3.67,"calories":438,"avgHR":146,"maxHR":163,"time":"00:33:03","ascent":56}]
+};
+
+// ====================== OG SABBATICAL SCHEDULE ======================
+// Mon=Push, Tue=Cardio, Wed=Pull, Thu=Adventure, Fri=Legs, Sat=Long Cardio, Sun=Rest
+// Each exercise: { name, ogType ('skill'|'strength'|'accessory'|'prehab'|'core'), target, defaultSets, ogNote, advanceWhen }
+const SABBATICAL_SCHEDULE = [
+  { schedIdx: 0, name: 'Upper Push', type: 'push', emoji: '💪',
+    ogNote: 'OG Order: Skill → H-Push Strength → V-Push Strength → Accessory → Core → Prehab',
+    exercises: [
+      { id:'hs_hold',  name:'Wall Handstand Hold',        ogType:'skill',     target:'3 × 20–60s', defaultSets:3, advanceWhen:'Hold 60s → attempt HSPU negatives',   note:'Straight-body kick-up to wall. Shoulders shrug into ears. Fresh CNS only — always do first.' },
+      { id:'h_push',   name:'H-Push Progression',         ogType:'strength',  target:'4 × 5–8',    defaultSets:4, advanceWhen:'3 sets of 8 clean → advance variation', note:'Wk1-4: Ring push-ups. Wk5-8: Archer push-ups. Wk9+: Ring dips. 2–3 min rest. OG standard.' },
+      { id:'v_push',   name:'V-Push Progression',         ogType:'strength',  target:'3 × 5–8',    defaultSets:3, advanceWhen:'3×8 → elevate feet higher or HSPU neg', note:'Wk1-4: Elevated pike push-up. Wk5-8: HSPU negatives (5s lower). Wk9+: Full wall HSPU. 2 min rest.' },
+      { id:'push_vol', name:'Push-up Volume',              ogType:'accessory', target:'3 × 10–15',  defaultSets:3, advanceWhen:'N/A — hypertrophy volume work',         note:'Standard or decline. Sub-maximal. 2-second pause at bottom. 60–90s rest.' },
+      { id:'l_sit',    name:'L-Sit Progression',          ogType:'core',      target:'3 × 10–20s', defaultSets:3, advanceWhen:'3×20s → move to harder surface',        note:'Tuck on floor → legs extended → push-up bars → rings. OG core fundamental.' },
+      { id:'face_pull',name:'Band Face Pulls + Scap Push-ups', ogType:'prehab', target:'3 × 15–20', defaultSets:3, advanceWhen:'N/A — do every session forever',       note:'Face pulls: thumb to ears. Scap push-ups: protract/retract. Non-negotiable shoulder health.' }
+    ]
+  },
+  { schedIdx: 1, name: 'Zone 2 Cardio', type: 'cardio', emoji: '🏃',
+    ogNote: 'OG Aerobic Base: Zone 2 (HR 130–150) builds mitochondria — the engine for boundless energy. Do 3×/week minimum.',
+    exercises: [
+      { id:'z2_run',   name:'Easy Run / Hike',            ogType:'skill',     target:'30–50 min · HR 130–150', defaultSets:1, advanceWhen:'Build to 60 min comfortably', note:'Conversational pace ~9:30–10:30/mile. Never harder than easy conversation.' },
+      { id:'z2_alt',   name:'Alt: Bike / Swim / Paddle',  ogType:'accessory', target:'Any duration',           defaultSets:1, advanceWhen:'N/A — just move',             note:'Any Zone 2 aerobic modality counts. Mountain biking, kayaking, snorkeling — it all works.' }
+    ]
+  },
+  { schedIdx: 2, name: 'Upper Pull', type: 'pull', emoji: '🔄',
+    ogNote: 'OG Order: Scapular prep → V-Pull Strength → H-Pull Strength → Accessory → Prehab. Straight-arm work (dead hang) before bent-arm pulling.',
+    exercises: [
+      { id:'scap',     name:'Dead Hang + Scapular Pulls', ogType:'skill',     target:'3 × 30–60s + 10 scap pulls', defaultSets:3, advanceWhen:'60s hang → add scap pull variations', note:'Full passive hang, then depress shoulders without bending elbows. Primes lats and protects shoulder.' },
+      { id:'v_pull',   name:'V-Pull Progression',         ogType:'strength',  target:'4 × 5–8',    defaultSets:4, advanceWhen:'3×8 → advance grip or add L-sit',      note:'You start at close/wide pull-up. Wk5-8: L-sit pull-up (tuck). Wk9+: Archer or weighted. 2–3 min rest.' },
+      { id:'h_pull',   name:'H-Pull (Ring Row) Progression', ogType:'strength', target:'3 × 8–12', defaultSets:3, advanceWhen:'3×12 → lower angle or elevate feet',    note:'Horizontal ring row. Wk5-8: Feet elevated. Wk9+: Archer ring row. Squeeze scapulae at top.' },
+      { id:'curls',    name:'Ring / Band Bicep Curls',    ogType:'accessory', target:'3 × 10–15',  defaultSets:3, advanceWhen:'N/A — elbow health accessory',          note:'Underhand ring rows with short ROM, or band curls. Protects elbows under heavy pull loads.' },
+      { id:'pull_aparts', name:'Band Pull-Aparts',        ogType:'prehab',    target:'3 × 15–20',  defaultSets:3, advanceWhen:'N/A — do daily',                       note:'Band at chest, pull to T. Rear delts + posture. Nearly impossible to overdo. Do daily if possible.' },
+      { id:'dislocates', name:'Band Dislocates + YTW',    ogType:'prehab',    target:'2 × 10 each', defaultSets:2, advanceWhen:'N/A — shoulder mobility',              note:'Wide grip dislocates over head front-to-back. YTW lying face down. OG shoulder-bulletproofing protocol.' }
+    ]
+  },
+  { schedIdx: 3, name: 'Adventure Day', type: 'flex', emoji: '🌍',
+    ogNote: 'OG: Active recovery and adventure IS training. Log what you do — your AI Coach will account for it in the plan.',
+    exercises: [
+      { id:'adventure', name:'Adventure / Explore',       ogType:'skill',     target:'Any duration', defaultSets:1, advanceWhen:'N/A — do anything that excites you', note:'Hike, cycle, swim, walk a new city, paddleboard, rock climb. Log distance + time.' },
+      { id:'mobility',  name:'Mobility + Yoga',           ogType:'prehab',    target:'20–30 min',    defaultSets:1, advanceWhen:'N/A — daily habit',                  note:'Hip 90/90, cat-cow, thoracic rotation, shoulder circles. Your yoga mat + floor = full mobility session.' }
+    ]
+  },
+  { schedIdx: 4, name: 'Lower Body', type: 'legs', emoji: '🦵',
+    ogNote: 'OG Order: Pistol Skill → BSS Strength → Nordic Strength → Power → Accessory → Prehab. If you hiked today, reduce volume by 50%.',
+    exercises: [
+      { id:'pistol',   name:'Pistol Squat Progression',   ogType:'skill',     target:'3 × 3–5/leg', defaultSets:3, advanceWhen:'3×5 → reduce box height or wall assist', note:'Wk1-4: Sit to box, stand 1-leg. Wk5-8: Wall-assisted partial. Wk9+: Full pistol. Fresh legs, do first.' },
+      { id:'bss',      name:'Bulgarian Split Squat',       ogType:'strength',  target:'4 × 5–8/leg', defaultSets:4, advanceWhen:'3×8/leg BW → add backpack weight',      note:'Rear foot on chair/bed, front foot forward. OG: best single-leg quad/glute movement. 2 min rest.' },
+      { id:'nordic',   name:'Nordic Hamstring Curl',       ogType:'strength',  target:'3 × 3–6 negs', defaultSets:3, advanceWhen:'3×6 negs → partial concentric',       note:'Anchor feet, lower 4–5s, catch with hands. Wk5+: push up partway. Wk9+: full curl. 2 min rest.' },
+      { id:'jump_sq',  name:'Jump Squats',                 ogType:'accessory', target:'3 × 10–12',   defaultSets:3, advanceWhen:'N/A — power conditioning',              note:'Full depth, explode up. Land soft. OG: power work after strength. Crucial for hiking and running.' },
+      { id:'calf',     name:'Single-Leg Calf Raise',       ogType:'accessory', target:'3 × 20–25/leg', defaultSets:3, advanceWhen:'N/A — do daily, calves love volume',  note:'Step edge, full ROM. OG: calves are postural — they handle huge volume. Do every day.' },
+      { id:'hip_mob',  name:'Hip 90/90 + SL RDL',         ogType:'prehab',    target:'2 × 60s + 3×8 SL-RDL', defaultSets:2, advanceWhen:'N/A — hip health',            note:'90/90 hip rotation + single-leg RDL hinge. OG: hip mobility prevents most lower body issues.' }
+    ]
+  },
+  { schedIdx: 5, name: 'Long Cardio / Adventure', type: 'cardio', emoji: '🚴',
+    ogNote: 'OG: Longer aerobic session builds cardiac output. One big effort/week is the key to all-day energy. Log your adventure activities — they count.',
+    exercises: [
+      { id:'long_card', name:'Long Cardio Effort',         ogType:'skill',     target:'45–90 min',   defaultSets:1, advanceWhen:'Build to 90 min easy',                 note:'Bike, longer run, hike with elevation, swim. This is your big aerobic day. Explore somewhere new.' },
+      { id:'adv2',      name:'OR: Full-Day Adventure',     ogType:'accessory', target:'As long as it takes', defaultSets:1, advanceWhen:'N/A',                          note:'Surf, kayak, ski, rock climb, mountain bike all day. Log it. Counts as combined cardio + leg day.' }
+    ]
+  },
+  { schedIdx: 6, name: 'Rest + Recover', type: 'rest', emoji: '😴',
+    ogNote: 'OG: Recovery is where adaptation happens. 7–9 hours sleep. Supercompensation requires rest. Never skip your rest day.',
+    exercises: [
+      { id:'rest_walk', name:'Easy Walk / Light Stretch',  ogType:'prehab',    target:'20–40 min',   defaultSets:1, advanceWhen:'N/A',                                  note:'Light movement promotes blood flow without stressing the system. Walk, not hike.' },
+      { id:'mob_full',  name:'Full Mobility Session',      ogType:'prehab',    target:'15–20 min',   defaultSets:1, advanceWhen:'N/A — build the habit',                note:'Hip openers, spinal rotation, shoulder circles, calf stretches. Yoga mat time. Especially after hard leg days.' }
+    ]
+  }
+];
+
+// ====================== HELPERS ======================
+function dateKey(d) { return d.toISOString().split('T')[0]; }
+function todayKey() { return dateKey(new Date()); }
+function getScheduleForDate(d) {
+  // Mon=Push(0), Tue=Cardio(1), Wed=Pull(2), Thu=Adventure(3), Fri=Legs(4), Sat=LongCardio(5), Sun=Rest(6)
+  const map = [6,0,1,2,3,4,5]; // JS Sunday=0 → schedule index
+  const override = state.overrides && state.overrides[dateKey(d)];
+  if (override !== undefined) return SABBATICAL_SCHEDULE[override];
+  return SABBATICAL_SCHEDULE[map[d.getDay()]];
+}
+function fmtDate(d) { return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}); }
+function fmtDateShort(d) { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+// ====================== STATE ======================
+let state = {
+  chatHistory: [],
+  workouts: {},      // { [dateKey]: { sets: { [exId]: [{reps,weight,done}] }, note, completed, substitution } }
+  overrides: {},     // { [dateKey]: schedIdx } — if user changed what type a day is
+  settings: {},
+  currentTab: 'history'
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('marko_sabbatical_coach');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('marko_sabbatical_coach', JSON.stringify(state));
+  } catch(e) {}
+}
+
+// ====================== TAB SWITCHING ======================
+function switchTab(tab, dateStr) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const tabIndex = ['history','plan','calendar','today','coach','settings'].indexOf(tab);
+  document.querySelectorAll('.nav-tab')[tabIndex]?.classList.add('active');
+  state.currentTab = tab;
+  if (tab === 'today') renderTracker(dateStr || todayKey());
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'coach') updateWeekSummary();
+  if (tab === 'settings') loadSettings();
+}
+
+function openDayTracker(dateStr) {
+  switchTab('today', dateStr);
+}
+
+// ====================== CHARTS ======================
+function initCharts() {
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } }
+  };
+
+  // Monthly Volume
+  const months = Object.keys(WORKOUT_DATA.monthly_sessions);
+  const monthLabels = months.map(m => m.replace('20', "'").replace('-', '/'));
+  const pushCounts = months.map(m => WORKOUT_DATA.monthly_sessions[m].types['Push/Upper'] || 0);
+  const pullCounts = months.map(m => WORKOUT_DATA.monthly_sessions[m].types['Pull'] || 0);
+  const legsCounts = months.map(m => WORKOUT_DATA.monthly_sessions[m].types['Legs'] || 0);
+  const otherCounts = months.map(m => WORKOUT_DATA.monthly_sessions[m].types['Other'] || 0);
+
+  new Chart(document.getElementById('volumeChart'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [
+        { label: 'Push/Upper', data: pushCounts, backgroundColor: 'rgba(255,107,107,0.8)', stack: 'a' },
+        { label: 'Pull', data: pullCounts, backgroundColor: 'rgba(78,205,196,0.8)', stack: 'a' },
+        { label: 'Legs', data: legsCounts, backgroundColor: 'rgba(255,230,109,0.8)', stack: 'a' },
+        { label: 'Other', data: otherCounts, backgroundColor: 'rgba(195,166,255,0.8)', stack: 'a' }
+      ]
+    },
+    options: { ...chartDefaults, scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' }, stacked: true },
+      y: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, stacked: true }
+    }}
+  });
+
+  // Type Donut
+  const totalPush = pushCounts.reduce((a,b)=>a+b,0);
+  const totalPull = pullCounts.reduce((a,b)=>a+b,0);
+  const totalLegs = legsCounts.reduce((a,b)=>a+b,0);
+  const totalOther = otherCounts.reduce((a,b)=>a+b,0);
+  new Chart(document.getElementById('typeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Push/Upper', 'Pull', 'Legs', 'Other/Full'],
+      datasets: [{ data: [totalPush, totalPull, totalLegs, totalOther],
+        backgroundColor: ['rgba(255,107,107,0.8)','rgba(78,205,196,0.8)','rgba(255,230,109,0.8)','rgba(195,166,255,0.8)'],
+        borderColor: '#13151c', borderWidth: 3 }]
+    },
+    options: { ...chartDefaults, cutout: '65%' }
+  });
+
+  // Lift charts helper
+  function liftChart(canvasId, data, color) {
+    new Chart(document.getElementById(canvasId), {
+      type: 'line',
+      data: {
+        labels: data.map(d => d.date.slice(5)),
+        datasets: [{
+          label: 'Best Set (lbs)',
+          data: data.map(d => d.weight),
+          borderColor: color, backgroundColor: color + '20',
+          tension: 0.3, pointRadius: 4, fill: true
+        }]
+      },
+      options: { ...chartDefaults, scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }, plugins: { legend: { display: false } } }
+    });
+  }
+
+  liftChart('benchChart', WORKOUT_DATA.bench_history, '#ff6b6b');
+  liftChart('squatChart', WORKOUT_DATA.squat_history, '#ffe66d');
+  liftChart('ohpChart', WORKOUT_DATA.ohp_history, '#4ecdc4');
+  liftChart('legpressChart', WORKOUT_DATA.legpress_history, '#a8e6cf');
+}
+
+// ====================== ACTIVITY TABLE ======================
+function buildActivityTable() {
+  const table = document.getElementById('activityTable');
+  table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Distance</th><th>HR</th><th>Time</th></tr></thead><tbody>${
+    WORKOUT_DATA.garmin_activities.slice(0, 12).map(a => {
+      const badge = {Running: 'badge-running', 'Strength Training': 'badge-strength', Cycling: 'badge-cycling', Hiking: 'badge-hiking'}[a.type] || '';
+      const dist = a.distance > 0 ? a.distance + ' mi' : '—';
+      const hr = a.avgHR > 0 ? a.avgHR + ' bpm' : '—';
+      const time = a.time.replace(/^00:/, '').replace(/^0/, '');
+      return `<tr><td>${a.date.slice(5)}</td><td><span class="activity-type-badge ${badge}">${a.type}</span></td><td>${dist}</td><td>${hr}</td><td>${time}</td></tr>`;
+    }).join('')
+  }</tbody>`;
+}
+
+// ====================== CALENDAR ======================
+let calOffset = 0; // weeks offset from current week
+
+function calShift(days) { calOffset += days/7; renderCalendar(); }
+function calGoToday() { calOffset = 0; renderCalendar(); }
+
+function renderCalendar() {
+  const typeColors = { push:'cal-badge-push', pull:'cal-badge-pull', legs:'cal-badge-legs', cardio:'cal-badge-cardio', flex:'cal-badge-flex', rest:'cal-badge-rest' };
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Start from Monday of the current offset week
+  const monday = new Date(today);
+  const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=Mon
+  monday.setDate(today.getDate() - dow + calOffset * 7);
+
+  const container = document.getElementById('calendarContainer');
+  const weeks = 3;
+  let html = '';
+
+  for (let w = 0; w < weeks; w++) {
+    const weekStart = new Date(monday); weekStart.setDate(monday.getDate() + w * 7);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    const isCurrentWeek = today >= weekStart && today <= weekEnd;
+
+    html += `<div class="cal-week-label ${isCurrentWeek ? 'style="background:rgba(0,212,170,0.07)"' : ''}">${isCurrentWeek ? '▶ ' : ''}Week of ${fmtDateShort(weekStart)} – ${fmtDateShort(weekEnd)}</div>`;
+    html += `<div class="cal-grid" style="margin-bottom:20px;">`;
+    html += ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(weekStart); day.setDate(weekStart.getDate() + d);
+      const dk = dateKey(day);
+      const sched = getScheduleForDate(day);
+      const wdata = state.workouts[dk] || {};
+      const isToday = dateKey(day) === dateKey(today);
+
+      // Completion status
+      const totalEx = sched.exercises.length;
+      let doneEx = 0;
+      if (wdata.sets) {
+        for (const ex of sched.exercises) {
+          const sets = wdata.sets[ex.id] || [];
+          if (sets.some(s => s.done)) doneEx++;
+        }
+      }
+      const statusEmoji = wdata.completed ? '✅' : doneEx > 0 ? '🟡' : '';
+
+      // Substitution label
+      const subLabel = wdata.substitution ? `<div class="cal-note-preview">↩ ${wdata.substitution}</div>` : '';
+      const noteLabel = wdata.note && !wdata.substitution ? `<div class="cal-note-preview">${wdata.note}</div>` : '';
+
+      html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="openDayTracker('${dk}')">
+        <div class="cal-day-num">${day.getDate()}</div>
+        <span class="cal-workout-badge ${typeColors[sched.type]}">${sched.emoji} ${sched.name}</span>
+        ${doneEx > 0 ? `<div style="font-size:10px;color:var(--muted)">${doneEx}/${totalEx} done</div>` : ''}
+        ${subLabel}${noteLabel}
+        <span class="cal-status">${statusEmoji}</span>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+
+  // Summary stats
+  const summary = {};
+  for (let d = 0; d < weeks * 7; d++) {
+    const day = new Date(monday); day.setDate(monday.getDate() + d);
+    const dk = dateKey(day);
+    const wdata = state.workouts[dk] || {};
+    if (wdata.completed) {
+      const sched = getScheduleForDate(day);
+      summary[sched.type] = (summary[sched.type] || 0) + 1;
+    }
+  }
+  const typeNames = { push:'Push Days', pull:'Pull Days', legs:'Leg Days', cardio:'Cardio', flex:'Adventure', rest:'Rest' };
+  const typeCol = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)' };
+  const total = Object.values(summary).reduce((a,b)=>a+b,0);
+  let sumHtml = `<div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Completed (${weeks} wks)</div></div>`;
+  for (const [type, count] of Object.entries(summary)) {
+    sumHtml += `<div class="stat-card"><div class="stat-value" style="color:${typeCol[type]}">${count}</div><div class="stat-label">${typeNames[type]}</div></div>`;
+  }
+  document.getElementById('calSummary').innerHTML = sumHtml;
+}
+
+// ====================== WORKOUT TRACKER ======================
+let currentTrackerDate = null;
+
+function renderTracker(dk) {
+  currentTrackerDate = dk;
+  const d = new Date(dk + 'T12:00:00');
+  const sched = getScheduleForDate(d);
+  const wdata = state.workouts[dk] || { sets: {}, note: '', completed: false };
+  const isToday = dk === todayKey();
+  const isPast = d < new Date(new Date().setHours(0,0,0,0));
+  const typeColors = {push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)'};
+  const typeColor = typeColors[sched.type] || 'var(--text)';
+
+  // Progress calc
+  const exWithSets = sched.exercises.filter(ex => (wdata.sets || {})[ex.id]?.some(s=>s.done));
+  const pct = sched.exercises.length ? Math.round(exWithSets.length / sched.exercises.length * 100) : 0;
+
+  let html = `
+    <div class="tracker-header">
+      <button class="tracker-back" onclick="switchTab('calendar')">← Back to Calendar</button>
+      <div class="tracker-date">${isToday ? '📍 Today · ' : ''}${fmtDate(d)}</div>
+      <div class="tracker-wname" style="color:${typeColor}">${sched.emoji} ${sched.name}</div>
+      <div class="tracker-og-note">📖 OG Session Note: ${sched.ogNote}</div>
+      <div class="tracker-progress">
+        <div class="tracker-prog-bar"><div class="tracker-prog-fill" id="trackerProgFill" style="width:${pct}%"></div></div>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap">${exWithSets.length}/${sched.exercises.length} exercises · ${pct}%</span>
+      </div>
+    </div>
+
+    <div class="substitution-bar">
+      <span class="sub-label">↩ Substitution:</span>
+      <input class="sub-input" id="subInput" placeholder="e.g. Went mountain biking 2hrs instead — note it here" value="${wdata.substitution||''}" onchange="saveSubstitution('${dk}',this.value)">
+      <button class="sub-btn" onclick="saveSubstitution('${dk}',document.getElementById('subInput').value)">Save</button>
+    </div>`;
+
+  // Exercises
+  const ogTypeLabel = { skill:'SKILL', strength:'STRENGTH', accessory:'ACCESSORY', core:'CORE', prehab:'PREHAB' };
+  const ogTypeClass = { skill:'type-skill', strength:'type-strength', accessory:'type-accessory', core:'type-core', prehab:'type-prehab' };
+
+  for (const ex of sched.exercises) {
+    const sets = (wdata.sets && wdata.sets[ex.id]) || initSets(ex.defaultSets);
+    const exDone = sets.some(s => s.done);
+    html += `
+      <div class="tracker-exercise" id="exblock-${ex.id}" style="${exDone ? 'border-color:rgba(34,197,94,0.4)' : ''}">
+        <div class="tracker-ex-header">
+          <div>
+            <span class="tracker-ex-type ${ogTypeClass[ex.ogType]}">${ogTypeLabel[ex.ogType]}</span>
+          </div>
+          <div style="flex:1">
+            <div class="tracker-ex-name">${ex.name}</div>
+            <div class="tracker-ex-target">${ex.target}</div>
+            <div class="tracker-ex-note">${ex.note}</div>
+            ${ex.advanceWhen !== 'N/A' && ex.advanceWhen ? `<div style="font-size:10px;margin-top:4px;color:var(--accent);background:rgba(0,212,170,0.08);padding:3px 6px;border-radius:4px;display:inline-block">⬆ Advance when: ${ex.advanceWhen}</div>` : ''}
+          </div>
+        </div>
+        <div class="set-table">
+          <div class="set-row" style="margin-bottom:4px;">
+            <div class="set-label">#</div>
+            <div class="set-label">${ex.ogType==='cardio'||ex.id.includes('hang')||ex.id.includes('hold')||ex.id.includes('mob')||ex.id.includes('rest')||ex.id.includes('adv') ? 'Duration / Notes' : 'Reps'}</div>
+            <div class="set-label">${ex.ogType==='cardio'||['rest_walk','mob_full','adventure','adv2','z2_run','z2_alt','long_card'].includes(ex.id) ? 'HR / Distance' : 'Weight / Load'}</div>
+            <div class="set-label">RPE</div>
+            <div></div>
+          </div>
+          <div id="sets-${ex.id}">
+            ${sets.map((s,i) => renderSetRow(ex.id, i, s, dk)).join('')}
+          </div>
+          <button class="add-set-btn" onclick="addSet('${ex.id}','${dk}')">+ Add Set</button>
+        </div>
+      </div>`;
+  }
+
+  // Notes + finish
+  html += `
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">📝 Session Notes</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="quick-btn" onclick="setTrackerNote('${dk}','Felt great — full energy and strength. OG progression on track.')">Felt great</button>
+        <button class="quick-btn" onclick="setTrackerNote('${dk}','Low energy today — did what I could. Maybe reduce volume next session.')">Low energy</button>
+        <button class="quick-btn" onclick="setTrackerNote('${dk}','Progressed to next OG level on ')">Progressed!</button>
+        <button class="quick-btn" onclick="setTrackerNote('${dk}','Sore from yesterday — reduced intensity.')">Sore / recovery</button>
+      </div>
+      <textarea style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;resize:vertical;min-height:80px;font-family:inherit;" id="trackerNote" onchange="saveTrackerNote('${dk}',this.value)" placeholder="How did it go? What progressed? Anything to note for next time...">${wdata.note||''}</textarea>
+    </div>
+    <button class="tracker-finish-btn" onclick="finishWorkout('${dk}')" ${wdata.completed ? 'style="background:var(--success);color:white"' : ''}>
+      ${wdata.completed ? '✅ Workout Complete! (Click to undo)' : '✓ Mark Workout Complete'}
+    </button>
+    ${wdata.completed ? '<div class="workout-complete-banner show"><div style="font-size:24px">🎉</div><div style="font-size:18px;font-weight:800;color:var(--success)">Logged!</div><div style="font-size:13px;color:var(--muted)">Tell your AI Coach what you did to update the plan dynamically.</div></div>' : ''}
+  `;
+
+  document.getElementById('trackerContent').innerHTML = html;
+}
+
+function initSets(n) {
+  return Array.from({length:n}, () => ({reps:'', weight:'', rpe:'', done:false}));
+}
+
+function renderSetRow(exId, i, s, dk) {
+  return `<div class="set-row" id="setrow-${exId}-${i}">
+    <div class="set-num">${i+1}</div>
+    <input class="set-input ${s.reps?'filled':''}" type="text" placeholder="—" value="${s.reps||''}"
+      onchange="updateSet('${exId}',${i},'reps',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
+    <input class="set-input ${s.weight?'filled':''}" type="text" placeholder="—" value="${s.weight||''}"
+      onchange="updateSet('${exId}',${i},'weight',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
+    <input class="set-input ${s.rpe?'filled':''}" type="text" placeholder="RPE" value="${s.rpe||''}" style="font-size:12px;"
+      onchange="updateSet('${exId}',${i},'rpe',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
+    <button class="set-done-btn ${s.done?'done':''}" onclick="toggleSetDone('${exId}',${i},'${dk}')">✓</button>
+  </div>`;
+}
+
+function getWdata(dk) {
+  if (!state.workouts[dk]) state.workouts[dk] = { sets:{}, note:'', completed:false };
+  return state.workouts[dk];
+}
+
+function updateSet(exId, setIdx, field, value, dk) {
+  const w = getWdata(dk);
+  const sched = getScheduleForDate(new Date(dk+'T12:00:00'));
+  const ex = sched.exercises.find(e=>e.id===exId);
+  if (!w.sets[exId]) w.sets[exId] = initSets(ex ? ex.defaultSets : 3);
+  if (!w.sets[exId][setIdx]) w.sets[exId][setIdx] = {reps:'',weight:'',rpe:'',done:false};
+  w.sets[exId][setIdx][field] = value;
+  saveState();
+  refreshProgress(dk);
+}
+
+function toggleSetDone(exId, setIdx, dk) {
+  const w = getWdata(dk);
+  const sched = getScheduleForDate(new Date(dk+'T12:00:00'));
+  const ex = sched.exercises.find(e=>e.id===exId);
+  if (!w.sets[exId]) w.sets[exId] = initSets(ex ? ex.defaultSets : 3);
+  if (!w.sets[exId][setIdx]) w.sets[exId][setIdx] = {reps:'',weight:'',rpe:'',done:false};
+  w.sets[exId][setIdx].done = !w.sets[exId][setIdx].done;
+  saveState();
+  // Update button appearance
+  const btn = document.getElementById(`setrow-${exId}-${setIdx}`)?.querySelector('.set-done-btn');
+  if (btn) btn.classList.toggle('done', w.sets[exId][setIdx].done);
+  // Update exercise block border
+  const exBlock = document.getElementById(`exblock-${exId}`);
+  if (exBlock) exBlock.style.borderColor = w.sets[exId].some(s=>s.done) ? 'rgba(34,197,94,0.4)' : '';
+  refreshProgress(dk);
+}
+
+function addSet(exId, dk) {
+  const w = getWdata(dk);
+  if (!w.sets[exId]) w.sets[exId] = [];
+  w.sets[exId].push({reps:'',weight:'',rpe:'',done:false});
+  saveState();
+  const container = document.getElementById(`sets-${exId}`);
+  if (container) {
+    const i = w.sets[exId].length - 1;
+    container.insertAdjacentHTML('beforeend', renderSetRow(exId, i, {reps:'',weight:'',rpe:'',done:false}, dk));
+  }
+}
+
+function refreshProgress(dk) {
+  const sched = getScheduleForDate(new Date(dk+'T12:00:00'));
+  const w = state.workouts[dk] || {};
+  const done = sched.exercises.filter(ex => (w.sets||{})[ex.id]?.some(s=>s.done)).length;
+  const pct = sched.exercises.length ? Math.round(done / sched.exercises.length * 100) : 0;
+  const fill = document.getElementById('trackerProgFill');
+  if (fill) fill.style.width = pct + '%';
+  // Also refresh calendar if visible
+  if (state.currentTab === 'calendar') renderCalendar();
+}
+
+function saveSubstitution(dk, val) {
+  getWdata(dk).substitution = val;
+  saveState();
+}
+
+function saveTrackerNote(dk, val) {
+  getWdata(dk).note = val;
+  saveState();
+}
+
+function setTrackerNote(dk, text) {
+  document.getElementById('trackerNote').value = text;
+  saveTrackerNote(dk, text);
+}
+
+function finishWorkout(dk) {
+  const w = getWdata(dk);
+  w.completed = !w.completed;
+  saveState();
+  renderTracker(dk);
+  if (state.currentTab === 'calendar') renderCalendar();
+}
+
+// ====================== AI COACH ======================
+const SYSTEM_PROMPT = `You are Coach Claude, Marko's personal AI fitness coach for his sabbatical. You coach using the "Overcoming Gravity" (OG) methodology by Steven Low — the definitive framework for calisthenics and bodyweight strength progression.
+
+═══ ATHLETE PROFILE ═══
+- Name: Marko
+- Training history: 110 gym sessions (Oct 2024–Apr 2026), Push/Pull/Legs split
+- Peak lifts: Bench 165 lbs, Squat 195 lbs, RDL 175 lbs, Leg Press 450 lbs, OHP 110 lbs (machine)
+- Pull-ups: 5×5 bodyweight — strong vertical pull base
+- Running: 3–5 mi at ~9:10/mile base, threshold at ~8:36/mile
+- Also cycles (1hr sessions), hikes regularly
+- Strong aerobic base; leg strength is exceptional (great for hiking/adventures)
+
+═══ SABBATICAL SETUP ═══
+- Equipment: yoga mat, elevated surfaces; possibly rings, pull-up bar, push-up bars, bands
+- Goal: Maintain strength, "boundless energy" for adventure (hike, bike, swim, climb)
+- 12-week program structure: Mon Push / Tue Cardio / Wed Pull / Thu Adventure / Fri Legs / Sat Long Cardio / Sun Rest
+
+═══ OVERCOMING GRAVITY FRAMEWORK (Steven Low) ═══
+
+1. THE 6 MOVEMENT PATTERNS — train all six every week:
+   • Horizontal Push: push-ups → ring push-ups → archer push-ups → ring dips
+   • Vertical Push: pike push-up → elevated pike → wall HSPU → freestanding HSPU
+   • Horizontal Pull: incline ring row → horizontal ring row → archer row → one-arm row
+   • Vertical Pull: pull-up → L-sit pull-up → archer pull-up → one-arm chin progression
+   • Core (anti-extension/compression): hollow body → L-sit on floor → L-sit on bars → L-sit on rings → V-sit
+   • Legs: split squat → pistol progression → nordic curl → shrimp squat
+
+2. REP RANGES (OG standard):
+   • 1–5 reps = Max strength / neurological
+   • 5–8 reps = Strength (primary goal for skill movements)
+   • 8–12 reps = Hypertrophy (accessory work)
+   • 12–20 reps = Endurance / conditioning
+   Rule: Work toward 3 sets of 8 at a given progression level → then advance to the next harder variation. Never rush progressions.
+
+3. SESSION STRUCTURE — ALWAYS this order (OG law):
+   a) SKILL WORK first (front lever tuck, L-sit, handstand — needs fresh CNS, 10–15 min)
+   b) STRENGTH work (primary movement pattern, 4×5–8 reps, 2–3 min rest)
+   c) SECONDARY STRENGTH (second pattern, 3×5–8)
+   d) HYPERTROPHY / ACCESSORY (3×8–12, higher reps, less rest)
+   e) PREHAB / SHOULDER HEALTH (face pulls, scapular work — non-negotiable)
+
+4. STRAIGHT ARM vs. BENT ARM (critical OG distinction):
+   Straight-arm moves (planche, front lever, rings support) → different tendons than bent-arm (push-ups, pull-ups, rows). Don't exhaust bent-arm strength before straight-arm skill work. Keep them in the right order or on separate days.
+
+5. VOLUME TARGETS (OG beginner–intermediate):
+   • 25–50 quality reps per movement pattern per session
+   • 2× per week per pattern (e.g., push on Mon + partial push on Thu)
+   • Prioritize quality over quantity — "accumulate quality volume"
+
+6. MARKO'S STARTING PROGRESSION LEVELS:
+   • H-Push: Ring push-up level (strong enough for ring dips in Wk5+)
+   • V-Push: Pike push-up → elevated pike (target: wall HSPU by Wk9)
+   • H-Pull: Inclined ring row → horizontal ring row (target: archer row Wk9)
+   • V-Pull: Pull-up 5×5 → L-sit pull-up (target: weighted or archer Wk9)
+   • Core: Hollow body hold → L-sit on bars (target: L-sit on rings Wk9)
+   • Legs: Bulgarian split squat → box pistol (target: full pistol Wk9)
+   • Hamstrings: Nordic curl negatives (3×3–5) → partial concentric (target: full Wk9)
+
+7. OG PROGRESSION RULE: "When you achieve 3 sets of 5 quality reps at the harder variation with good form, you've earned it. Until then, stay and accumulate." Never sacrifice form for progression speed.
+
+8. ENERGY SYSTEM WORK (for "boundless energy"):
+   • Easy aerobic (Zone 2, HR 130–150): 3×/week minimum — builds mitochondrial density
+   • Threshold work (Zone 4, HR 160–175): 1×/week — raises lactate threshold
+   • Adventure activities count as training — hiking = legs+cardio, cycling = cardio, swimming = full body
+
+9. TENDON HEALTH (OG emphasis): Tendons adapt 3–10× slower than muscles. Progress conservatively. If joints feel achy, drop volume 30% and add more prehab. Shoulder health (face pulls, scapular pulls) is non-negotiable every session.
+
+═══ COACHING STYLE ═══
+- Concise and practical — Marko is athletic and self-aware
+- Reference OG principles when relevant, but don't lecture unless asked
+- When he reports doing something different, adapt and affirm — adventures COUNT as training
+- When prescribing work, always specify: sets × reps, rest periods, progression standard
+- Format: **bold** for exercise names, use line breaks for clarity
+- Today's date: ${new Date().toLocaleDateString()}`;
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMessage('user', msg);
+  input.value = '';
+  autoResize(input);
+
+  const apiKey = localStorage.getItem('marko_api_key') || '';
+  if (!apiKey) {
+    addMessage('ai', "I'd love to help, but I need an API key to respond. Head to the **Settings** tab and add your Anthropic API key — it's stored locally on your device and only used to talk to the Anthropic API. Takes 30 seconds!");
+    return;
+  }
+
+  document.getElementById('sendBtn').disabled = true;
+  const typingId = addTyping();
+
+  try {
+    const messages = state.chatHistory.map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }));
+    messages.push({ role: 'user', content: msg });
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: state.settings.model || 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: messages
+      })
+    });
+
+    removeTyping(typingId);
+
+    if (!response.ok) {
+      const err = await response.json();
+      addMessage('ai', `API error: ${err.error?.message || response.statusText}. Check your API key in Settings.`);
+    } else {
+      const data = await response.json();
+      const reply = data.content[0].text;
+      addMessage('ai', reply);
+      state.chatHistory.push({ role: 'user', content: msg });
+      state.chatHistory.push({ role: 'ai', content: reply });
+      if (state.chatHistory.length > 40) state.chatHistory = state.chatHistory.slice(-40);
+      saveState();
+    }
+  } catch(e) {
+    removeTyping(typingId);
+    addMessage('ai', `Connection error: ${e.message}. Check your internet connection and API key.`);
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+}
+
+let typingCounter = 0;
+function addTyping() {
+  const id = 'typing-' + typingCounter++;
+  const div = document.createElement('div');
+  div.className = 'message ai';
+  div.id = id;
+  div.innerHTML = `<div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chatMessages').appendChild(div);
+  scrollChat();
+  return id;
+}
+
+function removeTyping(id) {
+  document.getElementById(id)?.remove();
+}
+
+function addMessage(role, content) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  const time = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  const formatted = content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  div.innerHTML = `<div class="msg-bubble">${formatted}</div><div class="msg-time">${time}</div>`;
+  msgs.appendChild(div);
+  scrollChat();
+}
+
+function scrollChat() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendQuick(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = '48px';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function updateWeekSummary() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dayOfWeek);
+
+  let summary = '';
+  let completed = 0;
+  for (let i = 0; i <= dayOfWeek; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = d.toISOString().split('T')[0];
+    if (state.workouts && state.workouts[key]?.completed) { completed++; }
+  }
+  summary = `${completed} workouts completed<br>This week: ${dayOfWeek + 1} days in`;
+  document.getElementById('weekSummary').innerHTML = summary;
+
+  // Update equipment badges
+  const eq = state.settings.equipment || {};
+  document.getElementById('ringStatus').innerHTML = (eq.rings ? '✓' : '?') + ' Gymnastics rings';
+  document.getElementById('ringStatus').style.color = eq.rings ? 'var(--success)' : 'var(--muted)';
+  document.getElementById('barStatus').innerHTML = (eq.bar ? '✓' : '?') + ' Pull-up bar';
+  document.getElementById('barStatus').style.color = eq.bar ? 'var(--success)' : 'var(--muted)';
+  document.getElementById('pushupStatus').innerHTML = (eq.pushup ? '✓' : '?') + ' Push-up bars';
+  document.getElementById('pushupStatus').style.color = eq.pushup ? 'var(--success)' : 'var(--muted)';
+  document.getElementById('bandStatus').innerHTML = (eq.bands ? '✓' : '?') + ' Resistance bands';
+  document.getElementById('bandStatus').style.color = eq.bands ? 'var(--success)' : 'var(--muted)';
+}
+
+// ====================== SETTINGS ======================
+function loadSettings() {
+  const s = state.settings || {};
+  document.getElementById('apiKeyInput').value = localStorage.getItem('marko_api_key') || '';
+  document.getElementById('sabbaticalStart').value = s.sabbaticalStart || '';
+  document.getElementById('userName').value = s.userName || 'Marko';
+  document.getElementById('modelSelect').value = s.model || 'claude-sonnet-4-6';
+  const eq = s.equipment || {};
+  document.getElementById('eqRings').checked = !!eq.rings;
+  document.getElementById('eqBar').checked = !!eq.bar;
+  document.getElementById('eqPushup').checked = !!eq.pushup;
+  document.getElementById('eqBands').checked = !!eq.bands;
+  document.getElementById('eqWheel').checked = !!eq.wheel;
+  document.getElementById('eqDumbbells').checked = !!eq.dumbbells;
+}
+
+function saveSettings() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (apiKey) localStorage.setItem('marko_api_key', apiKey);
+  else localStorage.removeItem('marko_api_key');
+
+  state.settings = {
+    sabbaticalStart: document.getElementById('sabbaticalStart').value,
+    userName: document.getElementById('userName').value || 'Marko',
+    model: document.getElementById('modelSelect').value,
+    equipment: {
+      rings: document.getElementById('eqRings').checked,
+      bar: document.getElementById('eqBar').checked,
+      pushup: document.getElementById('eqPushup').checked,
+      bands: document.getElementById('eqBands').checked,
+      wheel: document.getElementById('eqWheel').checked,
+      dumbbells: document.getElementById('eqDumbbells').checked
+    }
+  };
+  saveState();
+
+  const msg = document.getElementById('savedMsg');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 2000);
+  updateDayCounter();
+  checkApiKey();
+}
+
+function updateDayCounter() {
+  const start = state.settings?.sabbaticalStart;
+  if (start) {
+    const days = Math.floor((new Date() - new Date(start)) / 86400000) + 1;
+    const week = Math.ceil(days / 7);
+    if (days > 0) document.getElementById('dayCounter').textContent = `🌍 Day ${days} · Week ${week}`;
+  }
+}
+
+function checkApiKey() {
+  const hasKey = !!localStorage.getItem('marko_api_key');
+  document.getElementById('apiWarning').style.display = hasKey ? 'none' : 'block';
+}
+
+function exportData() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `marko_coach_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        state = { ...state, ...imported };
+        saveState();
+        alert('Data imported successfully! Reload the page to see changes.');
+      } catch(err) { alert('Invalid backup file.'); }
+    };
+    reader.readAsText(e.target.files[0]);
+  };
+  input.click();
+}
+
+// ====================== WORKOUT TEMPLATE TOGGLE ======================
+function toggleWT(header) {
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ====================== INIT ======================
+function init() {
+  loadState();
+  initCharts();
+  buildActivityTable();
+  renderCalendar();
+  renderTracker(todayKey());
+  updateDayCounter();
+  checkApiKey();
+
+  // Restore chat history
+  if (state.chatHistory && state.chatHistory.length > 0) {
+    const pairs = [];
+    for (let i = 0; i < state.chatHistory.length; i++) {
+      pairs.push(state.chatHistory[i]);
+    }
+    pairs.forEach(m => addMessage(m.role, m.content));
+  }
+
+  updateWeekSummary();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
