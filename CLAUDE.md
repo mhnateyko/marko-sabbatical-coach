@@ -4,7 +4,8 @@ Single HTML file personal trainer app. No build step. No frameworks. Works offli
 
 ## File
 `/Users/markohnateyko/Documents/Workouts/sabbatical_coach.html`
-GitHub: `marko-sabbatical-coach` repo (target: GitHub Pages for permanent mobile URL)
+GitHub: https://github.com/mhnateyko/marko-sabbatical-coach
+**Live URL (iPhone bookmark):** https://mhnateyko.github.io/marko-sabbatical-coach/sabbatical_coach.html
 
 ## Architecture
 
