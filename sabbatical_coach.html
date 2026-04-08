@@ -1376,7 +1376,7 @@ let state = {
   workouts: {},      // { [dateKey]: { sets: { [exId]: [{reps,weight,done}] }, note, completed, substitution } }
   overrides: {},     // { [dateKey]: schedIdx } — if user changed what type a day is
   settings: {},
-  currentTab: 'history'
+  currentTab: 'calendar'
 };
 
 function loadState() {
@@ -1709,9 +1709,10 @@ function calGoToday() { calOffset = 0; renderCalendar(); }
 function renderCalendar() {
   const today = new Date(); today.setHours(0,0,0,0);
 
-  // Window: 7 days back from offset + 14 days forward = 21 days centered on today
+  // Default view: today through next 20 days. Each nav shift moves ±7 days.
+  // Negative offset lets you scroll back to review past sessions.
   const windowStart = new Date(today);
-  windowStart.setDate(today.getDate() + calOffset * 7 - 7);
+  windowStart.setDate(today.getDate() + calOffset * 7);
 
   const DAYS = 21;
   const typeStripe = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--border)' };
@@ -1788,10 +1789,14 @@ function renderCalendar() {
 
   // Heading
   const headingEl = document.getElementById('calHeading');
-  if (headingEl) headingEl.textContent = calOffset === 0 ? 'Training Log' : (() => {
-    const end = new Date(windowStart); end.setDate(windowStart.getDate() + DAYS - 1);
-    return `${fmtDateShort(windowStart)} – ${fmtDateShort(end)}`;
-  })();
+  if (headingEl) {
+    if (calOffset === 0) {
+      headingEl.textContent = 'Training Log';
+    } else {
+      const end = new Date(windowStart); end.setDate(windowStart.getDate() + DAYS - 1);
+      headingEl.textContent = `${fmtDateShort(windowStart)} – ${fmtDateShort(end)}`;
+    }
+  }
 
   // 3-week summary stats
   const summary = {};
@@ -3128,6 +3133,8 @@ async function init() {
   renderTracker(todayKey());
   updateDayCounter();
   checkApiKey();
+  // Activate the correct tab on load (respects saved state, default is calendar)
+  switchTab(state.currentTab || 'calendar');
 
   // Restore chat history
   if (state.chatHistory && state.chatHistory.length > 0) {
