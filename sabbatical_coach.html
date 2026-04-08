@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marko's Sabbatical Coach</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
     --bg: #0b0c10;
@@ -413,6 +414,26 @@
     .tracker-finish-btn { padding: 16px; font-size: 16px; }
     .add-set-btn { padding: 12px; font-size: 13px; }
   }
+
+  /* DRAG-AND-DROP ZONE */
+  .dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(0,212,170,0.05); }
+  .dropzone-icon { font-size: 36px; margin-bottom: 10px; }
+  .dropzone-label { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .dropzone-sub { font-size: 12px; color: var(--muted); }
+  .import-preview { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 14px; }
+  .import-preview-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .import-preview-row:last-child { border-bottom: none; }
+
+  /* SYNC STATUS */
+  .sync-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .sync-ok { background: rgba(34,197,94,0.15); color: var(--success); }
+  .sync-off { background: rgba(107,114,128,0.15); color: var(--muted); }
+  .sync-err { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* TOOL ACTION MESSAGE */
+  .message.tool-action .msg-bubble { background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2); font-size: 13px; }
 
   /* Extra small phones */
   @media (max-width: 380px) {
@@ -1221,6 +1242,50 @@
       </div>
 
       <div class="card mb-6">
+        <div class="card-title">☁️ Supabase Cloud Sync <span id="syncBadge" class="sync-badge sync-off"><span class="sync-dot"></span>Not configured</span></div>
+        <p class="text-sm text-muted mb-4" style="line-height:1.6;margin-bottom:16px;">Optional cloud backup — your data syncs to Supabase so it's available on any device. Works offline without it.</p>
+        <div style="background:var(--card2);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.7;">
+          <strong style="color:var(--text)">Setup (2 min):</strong><br>
+          1. Create free project at <a href="https://supabase.com" target="_blank" style="color:var(--accent)">supabase.com</a><br>
+          2. In SQL Editor, run the schema from CLAUDE.md (workouts + app_state tables)<br>
+          3. Go to Project Settings → API → copy Project URL and anon key below
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supabase Project URL</label>
+          <input type="text" class="form-input" id="supabaseUrl" placeholder="https://xyzxyz.supabase.co">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supabase Anon Key</label>
+          <input type="password" class="form-input" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          <div class="form-help">Anon key is safe to use in the browser — it's the public key, not the secret.</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:4px;">
+          <button class="save-btn" onclick="testSupabaseConnection()">Test Connection</button>
+          <button class="settings-btn" onclick="syncToSupabase(true)">Force Sync Now</button>
+          <span id="supabaseMsg" style="font-size:12px;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <div class="card mb-6">
+        <div class="card-title">📱 Garmin Activity Import</div>
+        <p class="text-sm text-muted" style="margin-bottom:16px;line-height:1.6;">
+          Export from <strong style="color:var(--text)">connect.garmin.com → Activities → Export CSV</strong>, then drop here.
+          Your data stays local (and syncs to Supabase if configured).
+        </p>
+        <div class="dropzone" id="garminDropzone"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleCSVDrop(event)"
+          onclick="document.getElementById('csvFileInput').click()">
+          <div class="dropzone-icon">📂</div>
+          <div class="dropzone-label">Drop Garmin CSV here</div>
+          <div class="dropzone-sub">or click to browse · activities.csv</div>
+          <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVFile(event)">
+        </div>
+        <div id="importPreview"></div>
+      </div>
+
+      <div class="card mb-6">
         <div class="card-title">💡 Best Way to Use This App</div>
         <div style="font-size:14px;line-height:1.8;color:var(--text);">
           <p style="margin-bottom:12px;"><strong class="text-accent">Recommendation: Keep this HTML file saved locally.</strong> This is the ideal setup for your sabbatical because:</p>
@@ -1460,12 +1525,16 @@ function initCharts() {
 // ====================== ACTIVITY TABLE ======================
 function buildActivityTable() {
   const table = document.getElementById('activityTable');
+  const activities = (state.garminActivities && state.garminActivities.length > 0)
+    ? state.garminActivities
+    : WORKOUT_DATA.garmin_activities;
+  const badgeMap = { Running:'badge-running', 'Strength Training':'badge-strength', Cycling:'badge-cycling', Hiking:'badge-hiking', Swimming:'badge-cycling', Walking:'badge-hiking' };
   table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Distance</th><th>HR</th><th>Time</th></tr></thead><tbody>${
-    WORKOUT_DATA.garmin_activities.slice(0, 12).map(a => {
-      const badge = {Running: 'badge-running', 'Strength Training': 'badge-strength', Cycling: 'badge-cycling', Hiking: 'badge-hiking'}[a.type] || '';
+    activities.slice(0, 15).map(a => {
+      const badge = badgeMap[a.type] || '';
       const dist = a.distance > 0 ? a.distance + ' mi' : '—';
       const hr = a.avgHR > 0 ? a.avgHR + ' bpm' : '—';
-      const time = a.time.replace(/^00:/, '').replace(/^0/, '');
+      const time = (a.time || '').replace(/^00:/, '').replace(/^0/, '');
       return `<tr><td>${a.date.slice(5)}</td><td><span class="activity-type-badge ${badge}">${a.type}</span></td><td>${dist}</td><td>${hr}</td><td>${time}</td></tr>`;
     }).join('')
   }</tbody>`;
@@ -1742,6 +1811,233 @@ function finishWorkout(dk) {
   if (state.currentTab === 'calendar') renderCalendar();
 }
 
+// ====================== SUPABASE ======================
+let supabaseClient = null;
+
+function initSupabase() {
+  const url = state.settings?.supabaseUrl;
+  const key = state.settings?.supabaseKey;
+  if (url && key && window.supabase) {
+    try {
+      supabaseClient = window.supabase.createClient(url, key);
+      updateSyncBadge('ok', 'Connected');
+    } catch(e) {
+      supabaseClient = null;
+      updateSyncBadge('err', 'Config error');
+    }
+  } else {
+    supabaseClient = null;
+    updateSyncBadge('off', 'Not configured');
+  }
+}
+
+function updateSyncBadge(status, text) {
+  const badge = document.getElementById('syncBadge');
+  if (!badge) return;
+  badge.className = `sync-badge sync-${status}`;
+  badge.innerHTML = `<span class="sync-dot"></span>${text}`;
+}
+
+async function testSupabaseConnection() {
+  const url = document.getElementById('supabaseUrl')?.value.trim();
+  const key = document.getElementById('supabaseKey')?.value.trim();
+  const msg = document.getElementById('supabaseMsg');
+  if (!url || !key) { if (msg) msg.textContent = 'Enter URL and key first'; return; }
+  if (msg) msg.textContent = 'Testing...';
+  try {
+    const client = window.supabase.createClient(url, key);
+    const { error } = await client.from('workouts').select('date_key').limit(1);
+    if (error) throw error;
+    if (msg) { msg.textContent = '✓ Connected!'; msg.style.color = 'var(--success)'; }
+    updateSyncBadge('ok', 'Connected');
+  } catch(e) {
+    if (msg) { msg.textContent = '✗ ' + (e.message || 'Connection failed'); msg.style.color = 'var(--warn)'; }
+    updateSyncBadge('err', 'Error');
+  }
+}
+
+async function syncToSupabase(showMsg) {
+  if (!supabaseClient) return;
+  const msg = document.getElementById('supabaseMsg');
+  try {
+    // Sync workouts
+    const workoutRows = Object.entries(state.workouts || {}).map(([date_key, w]) => ({
+      user_id: 'marko', date_key,
+      sets: w.sets || {}, note: w.note || '',
+      completed: !!w.completed, substitution: w.substitution || '',
+      updated_at: new Date().toISOString()
+    }));
+    if (workoutRows.length > 0) {
+      await supabaseClient.from('workouts').upsert(workoutRows, { onConflict: 'user_id,date_key' });
+    }
+    // Sync garmin + chat
+    const stateRows = [
+      { user_id:'marko', key:'garmin_activities', value: state.garminActivities || [] },
+      { user_id:'marko', key:'chat_history', value: state.chatHistory || [] },
+      { user_id:'marko', key:'overrides', value: state.overrides || {} }
+    ];
+    await supabaseClient.from('app_state').upsert(stateRows, { onConflict: 'user_id,key' });
+    updateSyncBadge('ok', 'Synced');
+    if (showMsg && msg) { msg.textContent = '✓ Synced!'; msg.style.color = 'var(--success)'; setTimeout(() => { if(msg) msg.textContent=''; }, 3000); }
+  } catch(e) {
+    updateSyncBadge('err', 'Sync failed');
+    if (showMsg && msg) { msg.textContent = '✗ ' + (e.message || 'Sync failed'); msg.style.color = 'var(--warn)'; }
+  }
+}
+
+async function loadFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    const [workoutsRes, stateRes] = await Promise.all([
+      supabaseClient.from('workouts').select('*').eq('user_id','marko'),
+      supabaseClient.from('app_state').select('*').eq('user_id','marko')
+    ]);
+    if (workoutsRes.data) {
+      for (const row of workoutsRes.data) {
+        state.workouts[row.date_key] = {
+          sets: row.sets || {}, note: row.note || '',
+          completed: !!row.completed, substitution: row.substitution || ''
+        };
+      }
+    }
+    if (stateRes.data) {
+      for (const row of stateRes.data) {
+        if (row.key === 'garmin_activities') state.garminActivities = row.value;
+        if (row.key === 'chat_history') state.chatHistory = row.value;
+        if (row.key === 'overrides') state.overrides = { ...state.overrides, ...row.value };
+      }
+    }
+    saveState();
+    updateSyncBadge('ok', 'Loaded');
+  } catch(e) {
+    console.warn('Supabase load failed:', e.message);
+  }
+}
+
+// ====================== GARMIN CSV IMPORT ======================
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('garminDropzone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  document.getElementById('garminDropzone').classList.remove('drag-over');
+}
+function handleCSVDrop(e) {
+  e.preventDefault();
+  document.getElementById('garminDropzone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+}
+function handleCSVFile(e) {
+  const file = e.target.files[0];
+  if (file) processCSVFile(file);
+}
+
+function processCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const activities = parseGarminCSV(ev.target.result);
+      showImportPreview(activities);
+    } catch(e) {
+      document.getElementById('importPreview').innerHTML =
+        `<div style="color:var(--warn);font-size:13px;padding:12px;">Parse error: ${e.message}. Make sure this is a Garmin Activities CSV.</div>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+let _pendingGarminImport = null;
+
+function showImportPreview(activities) {
+  _pendingGarminImport = activities;
+  const preview = document.getElementById('importPreview');
+  if (!activities.length) { preview.innerHTML = '<div style="color:var(--warn);padding:12px;font-size:13px;">No activities found in file.</div>'; return; }
+  const typeCount = {};
+  activities.forEach(a => { typeCount[a.type] = (typeCount[a.type]||0)+1; });
+  const summary = Object.entries(typeCount).map(([t,n]) => `${n} ${t}`).join(', ');
+  preview.innerHTML = `
+    <div class="import-preview">
+      <div style="font-weight:600;margin-bottom:10px;">📊 Found ${activities.length} activities · ${summary}</div>
+      <div style="margin-bottom:10px;font-size:12px;color:var(--muted);">Latest: ${activities[0]?.date} — ${activities[0]?.title}</div>
+      ${activities.slice(0,5).map(a => `
+        <div class="import-preview-row">
+          <span>${a.date} · ${a.type}</span>
+          <span style="color:var(--muted)">${a.distance > 0 ? a.distance+' mi' : ''} ${a.time}</span>
+        </div>`).join('')}
+      ${activities.length > 5 ? `<div style="font-size:11px;color:var(--muted);padding-top:6px;">... and ${activities.length-5} more</div>` : ''}
+      <button class="save-btn" style="margin-top:14px;width:100%;" onclick="confirmGarminImport()">
+        ✓ Import ${activities.length} Activities
+      </button>
+    </div>`;
+}
+
+function confirmGarminImport() {
+  if (!_pendingGarminImport) return;
+  importGarminActivities(_pendingGarminImport);
+  _pendingGarminImport = null;
+}
+
+function importGarminActivities(activities) {
+  state.garminActivities = activities;
+  saveState();
+  syncToSupabase(false);
+  buildActivityTable();
+  document.getElementById('importPreview').innerHTML =
+    `<div style="color:var(--success);padding:12px;font-size:13px;font-weight:600;">✓ Imported ${activities.length} activities!</div>`;
+}
+
+function parseGarminCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) throw new Error('Empty file');
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^"|"$/g,''));
+  const activities = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = parseCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((h,idx) => { row[h] = (values[idx]||'').trim().replace(/^"|"$/g,''); });
+    const rawDate = row['Date'] || row['Start Time'] || '';
+    const date = rawDate.split(' ')[0].split('T')[0];
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const distRaw = parseFloat(row['Distance'] || '0') || 0;
+    activities.push({
+      date,
+      type: normalizeGarminType(row['Activity Type'] || row['Type'] || 'Other'),
+      title: row['Title'] || row['Activity'] || row['Activity Type'] || 'Activity',
+      distance: Math.round(distRaw * 100) / 100,
+      calories: parseInt(row['Calories'] || '0') || 0,
+      avgHR: parseInt(row['Avg HR'] || '0') || 0,
+      maxHR: parseInt(row['Max HR'] || '0') || 0,
+      time: row['Time'] || row['Moving Time'] || row['Elapsed Time'] || '0:00:00',
+      ascent: parseInt(row['Total Ascent'] || '0') || 0
+    });
+  }
+  return activities.sort((a,b) => b.date.localeCompare(a.date));
+}
+
+function parseCSVLine(line) {
+  const result = []; let current = ''; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuotes = !inQuotes; }
+    else if (line[i] === ',' && !inQuotes) { result.push(current); current = ''; }
+    else { current += line[i]; }
+  }
+  result.push(current);
+  return result;
+}
+
+function normalizeGarminType(type) {
+  const t = type.toLowerCase();
+  if (t.includes('run')) return 'Running';
+  if (t.includes('cycl') || t.includes('bike') || t.includes('bik')) return 'Cycling';
+  if (t.includes('hik')) return 'Hiking';
+  if (t.includes('strength') || t.includes('weight') || t.includes('gym')) return 'Strength Training';
+  if (t.includes('swim')) return 'Swimming';
+  if (t.includes('walk')) return 'Walking';
+  return type;
+}
+
 // ====================== AI COACH ======================
 const SYSTEM_PROMPT = `You are Coach Claude, Marko's personal AI fitness coach for his sabbatical. You coach using the "Overcoming Gravity" (OG) methodology by Steven Low — the definitive framework for calisthenics and bodyweight strength progression.
 
@@ -1817,6 +2113,174 @@ const SYSTEM_PROMPT = `You are Coach Claude, Marko's personal AI fitness coach f
 - Format: **bold** for exercise names, use line breaks for clarity
 - Today's date: ${new Date().toLocaleDateString()}`;
 
+const AI_TOOLS = [
+  {
+    name: 'update_schedule',
+    description: 'Override the workout type for a specific date. Use when the user is doing something different than the standard schedule, wants to swap a workout day, or announces a change to their plan.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+        schedIdx: { type: 'integer', description: 'Schedule index: 0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio, 6=Rest' },
+        note: { type: 'string', description: 'Why this day was changed (optional)' }
+      },
+      required: ['date', 'schedIdx']
+    }
+  },
+  {
+    name: 'log_workout',
+    description: 'Log what the user actually did for a workout day — substitutions, session notes, or mark it complete.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+        note: { type: 'string', description: 'Session note or what they did' },
+        substitution: { type: 'string', description: 'What they did instead (e.g. "8-mile hike, 2500ft gain")' },
+        completed: { type: 'boolean', description: 'Mark workout as done' }
+      },
+      required: ['date']
+    }
+  },
+  {
+    name: 'reschedule_week',
+    description: 'Restructure multiple days at once. Use when the user announces a big event (long hike, travel, rest needed) that affects several upcoming workouts. Always apply this when a user says they\'re doing something on a specific day.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        changes: {
+          type: 'array',
+          description: 'List of schedule changes to apply',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: 'string', description: 'YYYY-MM-DD' },
+              schedIdx: { type: 'integer', description: '0=Push,1=Cardio,2=Pull,3=Adventure,4=Legs,5=LongCardio,6=Rest' },
+              note: { type: 'string' }
+            },
+            required: ['date', 'schedIdx']
+          }
+        },
+        reason: { type: 'string', description: 'Why the week is being restructured' }
+      },
+      required: ['changes']
+    }
+  },
+  {
+    name: 'get_progression_status',
+    description: 'Get current OG progression level and recent logged sets for a movement pattern. Call this before giving progression advice.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pattern: {
+          type: 'string',
+          enum: ['h_push', 'v_push', 'h_pull', 'v_pull', 'core', 'legs'],
+          description: 'h_push=horizontal push, v_push=vertical push, h_pull=horizontal pull, v_pull=vertical pull, core=L-sit, legs=pistol squat'
+        }
+      },
+      required: ['pattern']
+    }
+  }
+];
+
+function executeTool(name, input) {
+  switch (name) {
+    case 'update_schedule': {
+      if (!state.overrides) state.overrides = {};
+      state.overrides[input.date] = input.schedIdx;
+      if (input.note) {
+        const w = getWdata(input.date);
+        w.note = (w.note ? w.note + ' ' : '') + input.note;
+      }
+      saveState();
+      const sched = SABBATICAL_SCHEDULE[input.schedIdx];
+      if (state.currentTab === 'calendar') renderCalendar();
+      return { success: true, updated: input.date, workout: sched.name };
+    }
+    case 'log_workout': {
+      const w = getWdata(input.date);
+      if (input.note !== undefined) w.note = input.note;
+      if (input.substitution !== undefined) w.substitution = input.substitution;
+      if (input.completed !== undefined) w.completed = input.completed;
+      saveState();
+      syncToSupabase(false);
+      if (state.currentTab === 'calendar') renderCalendar();
+      if (state.currentTab === 'today' && currentTrackerDate === input.date) renderTracker(input.date);
+      return { success: true, logged: input.date };
+    }
+    case 'reschedule_week': {
+      if (!state.overrides) state.overrides = {};
+      const applied = [];
+      for (const change of (input.changes || [])) {
+        state.overrides[change.date] = change.schedIdx;
+        if (change.note) {
+          const w = getWdata(change.date);
+          w.note = change.note;
+        }
+        applied.push({ date: change.date, workout: SABBATICAL_SCHEDULE[change.schedIdx].name });
+      }
+      saveState();
+      syncToSupabase(false);
+      if (state.currentTab === 'calendar') renderCalendar();
+      return { success: true, rescheduled: applied };
+    }
+    case 'get_progression_status': {
+      const patternExIds = {
+        h_push: ['h_push', 'push_vol'], v_push: ['v_push', 'hs_hold'],
+        h_pull: ['h_pull', 'curls'], v_pull: ['v_pull', 'scap'],
+        core: ['l_sit'], legs: ['pistol', 'bss', 'nordic']
+      };
+      const progressionLevels = {
+        h_push: ['Incline push-up','Ring push-up','Archer push-up','Ring dip','Weighted ring dip'],
+        v_push: ['Pike push-up','Elevated pike push-up','HSPU negative (5s)','Wall HSPU','Freestanding HSPU'],
+        h_pull: ['Inclined ring row','Horizontal ring row','Archer row','One-arm row'],
+        v_pull: ['Pull-up 5×5','L-sit pull-up (tuck)','Archer pull-up','Weighted pull-up'],
+        core: ['Hollow body hold','Tuck L-sit on floor','L-sit on bars','L-sit on rings','V-sit'],
+        legs: ['Box squat → BSS','Wall-assisted pistol','Partial pistol','Full pistol squat']
+      };
+      const exIds = patternExIds[input.pattern] || [];
+      const recentSets = {};
+      const today = new Date();
+      for (let i = 0; i < 21; i++) {
+        const d = new Date(today); d.setDate(today.getDate() - i);
+        const dk = dateKey(d);
+        const wdata = state.workouts[dk];
+        if (wdata?.sets) {
+          for (const exId of exIds) {
+            if (wdata.sets[exId]?.length) {
+              if (!recentSets[exId]) recentSets[exId] = [];
+              const doneSets = wdata.sets[exId].filter(s => s.done);
+              if (doneSets.length) recentSets[exId].push({ date: dk, sets: doneSets });
+            }
+          }
+        }
+      }
+      const levels = progressionLevels[input.pattern] || [];
+      return { pattern: input.pattern, progression_ladder: levels, current_level_index: 0, recent_logged_sets: recentSets, note: 'Level index 0 = starting level. Advance when 3×8 clean reps achieved.' };
+    }
+    default:
+      return { error: `Unknown tool: ${name}` };
+  }
+}
+
+function formatToolAction({ name, input, result }) {
+  const icons = { update_schedule:'📅', log_workout:'✅', reschedule_week:'🗓', get_progression_status:'📊' };
+  const icon = icons[name] || '🔧';
+  switch (name) {
+    case 'update_schedule':
+      return `${icon} **Plan updated:** ${input.date} → ${SABBATICAL_SCHEDULE[input.schedIdx]?.name}`;
+    case 'log_workout':
+      return `${icon} **Logged:** ${input.date}${input.substitution ? ' · ' + input.substitution : ''}${input.completed ? ' · marked complete' : ''}`;
+    case 'reschedule_week': {
+      const lines = (result.rescheduled || []).map(c => `${c.date} → ${c.workout}`).join(', ');
+      return `${icon} **Week rescheduled:** ${lines || input.reason || ''}`;
+    }
+    case 'get_progression_status':
+      return `${icon} **Checked progression:** ${input.pattern}`;
+    default:
+      return `${icon} ${name}`;
+  }
+}
+
 async function sendMessage() {
   const input = document.getElementById('chatInput');
   const msg = input.value.trim();
@@ -1836,42 +2300,78 @@ async function sendMessage() {
   const typingId = addTyping();
 
   try {
-    const messages = state.chatHistory.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content
-    }));
-    messages.push({ role: 'user', content: msg });
+    const messages = [
+      ...state.chatHistory.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+      { role: 'user', content: msg }
+    ];
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: state.settings.model || 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: messages
-      })
-    });
+    let finalReply = null;
+    const toolsUsed = [];
+
+    // Tool-use loop: keep going until stop_reason is 'end_turn'
+    while (!finalReply) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: state.settings.model || 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          system: SYSTEM_PROMPT,
+          tools: AI_TOOLS,
+          messages
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        removeTyping(typingId);
+        addMessage('ai', `API error: ${err.error?.message || response.statusText}. Check your API key in Settings.`);
+        document.getElementById('sendBtn').disabled = false;
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.stop_reason === 'tool_use') {
+        // Execute each tool call and collect results
+        const toolResults = [];
+        for (const block of data.content) {
+          if (block.type === 'tool_use') {
+            const result = executeTool(block.name, block.input);
+            toolsUsed.push({ name: block.name, input: block.input, result });
+            toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
+          }
+        }
+        // Append assistant turn (with tool_use blocks) + tool results
+        messages.push({ role: 'assistant', content: data.content });
+        messages.push({ role: 'user', content: toolResults });
+      } else {
+        // end_turn — extract text response
+        const textBlock = data.content.find(b => b.type === 'text');
+        finalReply = textBlock ? textBlock.text : '(no response)';
+      }
+    }
 
     removeTyping(typingId);
 
-    if (!response.ok) {
-      const err = await response.json();
-      addMessage('ai', `API error: ${err.error?.message || response.statusText}. Check your API key in Settings.`);
-    } else {
-      const data = await response.json();
-      const reply = data.content[0].text;
-      addMessage('ai', reply);
-      state.chatHistory.push({ role: 'user', content: msg });
-      state.chatHistory.push({ role: 'ai', content: reply });
-      if (state.chatHistory.length > 40) state.chatHistory = state.chatHistory.slice(-40);
-      saveState();
+    // Show tool action summary above the reply
+    if (toolsUsed.length > 0) {
+      const summary = toolsUsed.map(t => formatToolAction(t)).join('\n');
+      addMessage('ai', summary, 'tool-action');
     }
+
+    addMessage('ai', finalReply);
+    state.chatHistory.push({ role: 'user', content: msg });
+    state.chatHistory.push({ role: 'ai', content: finalReply });
+    if (state.chatHistory.length > 40) state.chatHistory = state.chatHistory.slice(-40);
+    saveState();
+    if (toolsUsed.length > 0) syncToSupabase(false);
+
   } catch(e) {
     removeTyping(typingId);
     addMessage('ai', `Connection error: ${e.message}. Check your internet connection and API key.`);
@@ -1896,10 +2396,10 @@ function removeTyping(id) {
   document.getElementById(id)?.remove();
 }
 
-function addMessage(role, content) {
+function addMessage(role, content, extraClass) {
   const msgs = document.getElementById('chatMessages');
   const div = document.createElement('div');
-  div.className = `message ${role}`;
+  div.className = `message ${role}${extraClass ? ' ' + extraClass : ''}`;
   const time = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
   const formatted = content
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -1971,6 +2471,10 @@ function loadSettings() {
   document.getElementById('eqBands').checked = !!eq.bands;
   document.getElementById('eqWheel').checked = !!eq.wheel;
   document.getElementById('eqDumbbells').checked = !!eq.dumbbells;
+  if (document.getElementById('supabaseUrl')) {
+    document.getElementById('supabaseUrl').value = s.supabaseUrl || '';
+    document.getElementById('supabaseKey').value = s.supabaseKey || '';
+  }
 }
 
 function saveSettings() {
@@ -1989,9 +2493,12 @@ function saveSettings() {
       bands: document.getElementById('eqBands').checked,
       wheel: document.getElementById('eqWheel').checked,
       dumbbells: document.getElementById('eqDumbbells').checked
-    }
+    },
+    supabaseUrl: document.getElementById('supabaseUrl')?.value.trim() || '',
+    supabaseKey: document.getElementById('supabaseKey')?.value.trim() || ''
   };
   saveState();
+  initSupabase();
 
   const msg = document.getElementById('savedMsg');
   msg.style.display = 'inline';
@@ -2052,8 +2559,9 @@ function toggleWT(header) {
 }
 
 // ====================== INIT ======================
-function init() {
+async function init() {
   loadState();
+  initSupabase();
   initCharts();
   buildActivityTable();
   renderCalendar();
@@ -2063,14 +2571,19 @@ function init() {
 
   // Restore chat history
   if (state.chatHistory && state.chatHistory.length > 0) {
-    const pairs = [];
-    for (let i = 0; i < state.chatHistory.length; i++) {
-      pairs.push(state.chatHistory[i]);
-    }
-    pairs.forEach(m => addMessage(m.role, m.content));
+    state.chatHistory.forEach(m => addMessage(m.role, m.content));
   }
 
   updateWeekSummary();
+
+  // Pull latest from Supabase in background (non-blocking)
+  if (supabaseClient) {
+    loadFromSupabase().then(() => {
+      buildActivityTable();
+      renderCalendar();
+      updateWeekSummary();
+    });
+  }
 }
 
 window.addEventListener('load', init);
