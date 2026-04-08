@@ -3338,7 +3338,7 @@ async function init() {
   updateDayCounter();
   checkApiKey();
   // Activate the correct tab on load (respects saved state, default is calendar)
-  switchTab(state.currentTab || 'calendar');
+  switchTab('today'); // always open to Workout tab on load
 
   // Restore chat history
   if (state.chatHistory && state.chatHistory.length > 0) {
