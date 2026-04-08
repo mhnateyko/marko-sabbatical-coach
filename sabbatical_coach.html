@@ -1398,12 +1398,19 @@ function loadState() {
   }
 }
 
+let _syncDebounce = null;
 function saveState() {
   try {
     localStorage.setItem('marko_sabbatical_coach', JSON.stringify(state));
   } catch(e) {}
   // Refresh history tab if active
   if (state.currentTab === 'history') renderHistoryDynamic();
+  // Debounced Supabase push — fires 3s after the last change, so rapid
+  // taps (logging sets, notes) batch into one network call automatically
+  if (supabaseClient) {
+    clearTimeout(_syncDebounce);
+    _syncDebounce = setTimeout(() => syncToSupabase(false), 3000);
+  }
 }
 
 // ====================== TAB SWITCHING ======================
