@@ -55,7 +55,7 @@
   .logo span { color: var(--accent); }
   .tagline { font-size: 11px; color: var(--muted); margin-top: 1px; }
   .header-right { display: flex; align-items: center; gap: 10px; }
-  .sabbatical-badge { background: rgba(14,158,118,0.1); border: 1px solid rgba(14,158,118,0.25); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
+  .program-badge { background: rgba(14,158,118,0.1); border: 1px solid rgba(14,158,118,0.25); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
   .settings-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 7px 13px; border-radius: 7px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
   .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -355,7 +355,7 @@
     .header { padding: 10px 14px; }
     .logo { font-size: 16px; }
     .tagline { display: none; }
-    .sabbatical-badge { font-size: 10px; padding: 4px 9px; }
+    .program-badge { font-size: 10px; padding: 4px 9px; }
     .settings-btn { display: none; }
 
     /* NAV */
@@ -458,11 +458,11 @@
   <div class="header-left">
     <div>
       <div class="logo">Marko's <span>Coach</span></div>
-      <div class="tagline">Sabbatical · Anywhere, Anytime</div>
+      <div class="tagline">Dynamic · Goal-Directed · Anywhere</div>
     </div>
   </div>
   <div class="header-right">
-    <div class="sabbatical-badge" id="dayCounter">Sabbatical Mode</div>
+    <div class="program-badge" id="dayCounter">Active</div>
     <button class="settings-btn" onclick="switchTab('settings')">Settings</button>
   </div>
 </div>
@@ -481,8 +481,8 @@
   <!-- ======== HISTORY TAB ======== -->
   <div id="tab-history" class="tab-content active">
 
-    <!-- Dynamic sabbatical progress (updates as workouts are logged) -->
-    <div id="sabbaticalProgressSection"></div>
+    <!-- Dynamic training progress (updates as workouts are logged) -->
+    <div id="trainingProgressSection"></div>
 
     <!-- OG Progression status (live) -->
     <div id="ogProgressionSection"></div>
@@ -539,9 +539,9 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">This Sabbatical · Weekly Mix</div>
+        <div class="card-title">Weekly Activity Mix</div>
         <div class="chart-container-sm">
-          <canvas id="sabbaticalActivityChart"></canvas>
+          <canvas id="activityChart"></canvas>
         </div>
       </div>
     </div>
@@ -550,7 +550,7 @@
     <div class="section-header mb-4" style="margin-top:8px;">
       <div>
         <div class="section-title">Gym Baseline · Oct 2024 – Apr 2026</div>
-        <div class="section-sub">110 sessions · your strength foundation before sabbatical</div>
+        <div class="section-sub">110 sessions · your strength foundation</div>
       </div>
     </div>
 
@@ -600,7 +600,7 @@
   <div id="tab-plan" class="tab-content">
     <div class="section-header mb-6">
       <div>
-        <div class="section-title">Sabbatical Fitness Plan</div>
+        <div class="section-title">Training Plan</div>
         <div class="section-sub">Gym-to-Anywhere Transition · Strength + Boundless Energy</div>
       </div>
     </div>
@@ -1032,7 +1032,7 @@
             <div class="ex-notes">Mountain biking = adventure cardio + technical skill. Road/gravel = aerobic base with scenery. Great active recovery option. Counts as Zone 2 if easy, Zone 4 if hammering climbs.</div>
           </div>
           <div class="ex-row" style="border-left:3px solid var(--legs);">
-            <div><div class="ex-name">Hiking (with elevation)</div><div class="ex-equiv">Legs + cardio — the whole point of sabbatical</div></div>
+            <div><div class="ex-name">Hiking (with elevation)</div><div class="ex-equiv">Legs + cardio — adventure-ready training</div></div>
             <div class="ex-sets">2–8 hrs · any pace</div>
             <div class="ex-notes">OG: classify full-day hikes as a Lower Body + Cardio session — skip leg day the next day. Elevation gain = eccentric quad loading (hiking down = negative squat). Log distance + ascent to track load.</div>
           </div>
@@ -1087,7 +1087,7 @@
         <div class="chat-messages" id="chatMessages">
           <div class="message ai">
             <div class="msg-bubble">
-              Hey Marko! 👋 I'm your AI training coach for the sabbatical. I've been briefed on your entire training history — 110 gym sessions, peak bench of 165 lbs, squat at 195 lbs, and your solid running base at ~9 min/mile.<br><br>
+              Hey Marko! 👋 I'm your AI training coach. I've been briefed on your entire training history — 110 gym sessions, peak bench of 165 lbs, squat at 195 lbs, and your solid running base at ~9 min/mile.<br><br>
               Your fitness foundation is <strong>excellent</strong> for what you're about to do. The key now is translating that gym strength into functional, anywhere fitness.<br><br>
               A few things I can help with:<br>
               • Update your plan when you do something different than scheduled<br>
@@ -1145,7 +1145,7 @@
           <div id="weekSummary" style="font-size:13px;color:var(--muted);line-height:1.8;">Loading...</div>
         </div>
         <div class="side-card">
-          <div class="card-title">Sabbatical Goals</div>
+          <div class="card-title">Training Goals</div>
           <div style="font-size:13px;line-height:1.8;color:var(--text);">
             💪 Maintain strength<br>
             Boundless energy<br>
@@ -1182,10 +1182,10 @@
       </div>
 
       <div class="card mb-6">
-        <div class="card-title">🌍 Sabbatical Configuration</div>
+        <div class="card-title">📅 Program Setup</div>
         <div class="form-group">
-          <label class="form-label">Sabbatical Start Date</label>
-          <input type="date" class="form-input" id="sabbaticalStart">
+          <label class="form-label">Program Start Date</label>
+          <input type="date" class="form-input" id="programStart">
           <div class="form-help">Used to calculate which week of your program you're in</div>
         </div>
         <div class="form-group">
@@ -1272,7 +1272,7 @@
       <div class="card mb-6">
         <div class="card-title">💡 Best Way to Use This App</div>
         <div style="font-size:14px;line-height:1.8;color:var(--text);">
-          <p style="margin-bottom:12px;"><strong class="text-accent">Recommendation: Keep this HTML file saved locally.</strong> This is the ideal setup for your sabbatical because:</p>
+          <p style="margin-bottom:12px;"><strong class="text-accent">Recommendation: Keep this HTML file saved locally.</strong> This is the ideal setup for this app because:</p>
           <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:8px;">
             ✓ <strong style="color:var(--text)">Works offline</strong> — You can view workouts without internet anywhere in the world<br>
             ✓ <strong style="color:var(--text)">Durable memory</strong> — All your workout logs, chat history, and settings persist in your browser<br>
@@ -1308,10 +1308,10 @@ const WORKOUT_DATA = {
   garmin_activities: [{"date":"2026-04-06","type":"Running","title":"Los Angeles Running","distance":3.01,"calories":342,"avgHR":138,"maxHR":150,"time":"00:28:11","ascent":43},{"date":"2026-04-05","type":"Strength Training","title":"Strength","distance":0.0,"calories":251,"avgHR":116,"maxHR":146,"time":"00:34:17","ascent":0},{"date":"2026-04-05","type":"Cycling","title":"Los Angeles Cycling","distance":10.03,"calories":453,"avgHR":118,"maxHR":162,"time":"01:09:13","ascent":715},{"date":"2026-04-04","type":"Hiking","title":"Los Angeles Hiking","distance":3.53,"calories":471,"avgHR":118,"maxHR":148,"time":"01:12:05","ascent":692},{"date":"2026-04-03","type":"Running","title":"Los Angeles - Base","distance":3.37,"calories":412,"avgHR":154,"maxHR":166,"time":"00:31:04","ascent":43},{"date":"2026-04-02","type":"Running","title":"Los Angeles - Base","distance":5.32,"calories":638,"avgHR":153,"maxHR":166,"time":"00:49:04","ascent":135},{"date":"2026-04-01","type":"Running","title":"Los Angeles Running","distance":3.04,"calories":382,"avgHR":153,"maxHR":169,"time":"00:28:53","ascent":39},{"date":"2026-03-31","type":"Strength Training","title":"Strength","distance":0.0,"calories":273,"avgHR":116,"maxHR":150,"time":"00:36:13","ascent":0},{"date":"2026-03-29","type":"Cycling","title":"Los Angeles Cycling","distance":6.81,"calories":644,"avgHR":138,"maxHR":167,"time":"01:08:52","ascent":1033},{"date":"2026-03-27","type":"Running","title":"Los Angeles - Threshold","distance":4.08,"calories":497,"avgHR":163,"maxHR":186,"time":"00:35:05","ascent":59},{"date":"2026-03-25","type":"Strength Training","title":"Strength","distance":0.0,"calories":410,"avgHR":121,"maxHR":150,"time":"00:52:41","ascent":0},{"date":"2026-03-24","type":"Running","title":"Los Angeles - Base","distance":3.32,"calories":398,"avgHR":150,"maxHR":166,"time":"00:30:05","ascent":66},{"date":"2026-03-23","type":"Running","title":"Los Angeles Running","distance":3.26,"calories":399,"avgHR":150,"maxHR":166,"time":"00:30:33","ascent":56},{"date":"2026-03-20","type":"Strength Training","title":"Strength","distance":0.0,"calories":162,"avgHR":100,"maxHR":131,"time":"00:29:16","ascent":0},{"date":"2026-03-19","type":"Running","title":"Los Angeles - Base","distance":3.61,"calories":456,"avgHR":160,"maxHR":175,"time":"00:32:48","ascent":66},{"date":"2026-03-17","type":"Running","title":"Los Angeles - Threshold","distance":3.98,"calories":501,"avgHR":162,"maxHR":188,"time":"00:35:03","ascent":95},{"date":"2026-03-16","type":"Strength Training","title":"Strength","distance":0.0,"calories":234,"avgHR":107,"maxHR":142,"time":"00:36:19","ascent":0},{"date":"2026-03-12","type":"Running","title":"Los Angeles Running","distance":3.01,"calories":362,"avgHR":149,"maxHR":172,"time":"00:26:49","ascent":72},{"date":"2026-03-11","type":"Running","title":"Los Angeles Running","distance":3.18,"calories":386,"avgHR":144,"maxHR":161,"time":"00:29:45","ascent":59},{"date":"2026-03-08","type":"Running","title":"Los Angeles - Base","distance":3.67,"calories":438,"avgHR":146,"maxHR":163,"time":"00:33:03","ascent":56}]
 };
 
-// ====================== OG SABBATICAL SCHEDULE ======================
+// ====================== TRAINING SCHEDULE ======================
 // Mon=Push, Tue=Cardio, Wed=Pull, Thu=Adventure, Fri=Legs, Sat=Long Cardio, Sun=Rest
 // Each exercise: { name, ogType ('skill'|'strength'|'accessory'|'prehab'|'core'), target, defaultSets, ogNote, advanceWhen }
-const SABBATICAL_SCHEDULE = [
+const TRAINING_SCHEDULE = [
   { schedIdx: 0, name: 'Upper Push', type: 'push', emoji: '💪',
     ogNote: 'OG Order: Skill → H-Push Strength → V-Push Strength → Accessory → Core → Prehab',
     exercises: [
@@ -1434,8 +1434,8 @@ function getScheduleForDate(d) {
   // Mon=Push(0), Tue=Cardio(1), Wed=Pull(2), Thu=Adventure(3), Fri=Legs(4), Sat=LongCardio(5), Sun=Rest(6)
   const map = [6,0,1,2,3,4,5]; // JS Sunday=0 → schedule index
   const override = state.overrides && state.overrides[dateKey(d)];
-  if (override !== undefined) return SABBATICAL_SCHEDULE[override];
-  return SABBATICAL_SCHEDULE[map[d.getDay()]];
+  if (override !== undefined) return TRAINING_SCHEDULE[override];
+  return TRAINING_SCHEDULE[map[d.getDay()]];
 }
 function fmtDate(d) { return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}); }
 function fmtDateShort(d) { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
@@ -1581,12 +1581,12 @@ function initCharts() {
 }
 
 // ====================== DYNAMIC HISTORY TAB ======================
-let _sabbaticalChartInstance = null;
+let _activityChartInstance = null;
 
 function renderHistoryDynamic() {
-  renderSabbaticalProgress();
+  renderTrainingProgress();
   renderOGProgression();
-  buildSabbaticalActivityChart();
+  buildActivityChart();
   // Update garmin source label
   const lbl = document.getElementById('garminDataSource');
   if (lbl) lbl.textContent = (state.garminActivities?.length > 0)
@@ -1594,8 +1594,8 @@ function renderHistoryDynamic() {
     : 'Showing sample data — import Garmin CSV in Settings';
 }
 
-function renderSabbaticalProgress() {
-  const el = document.getElementById('sabbaticalProgressSection');
+function renderTrainingProgress() {
+  const el = document.getElementById('trainingProgressSection');
   if (!el) return;
 
   const workouts = state.workouts || {};
@@ -1625,8 +1625,8 @@ function renderSabbaticalProgress() {
     Object.values(sets).forEach(s => { totalSetsLogged += s.filter(x => x.done).length; });
   });
 
-  // Sabbatical day count
-  const start = state.settings?.sabbaticalStart;
+  // Program day count
+  const start = state.settings?.programStart;
   const dayNum = start ? Math.max(1, Math.floor((new Date() - new Date(start)) / 86400000) + 1) : null;
   const weekNum = dayNum ? Math.ceil(dayNum / 7) : null;
 
@@ -1641,12 +1641,12 @@ function renderSabbaticalProgress() {
   el.innerHTML = `
     <div class="section-header mb-4" style="margin-bottom:12px;">
       <div>
-        <div class="section-title">Sabbatical Progress${dayNum ? ' · Day ' + dayNum : ''}</div>
+        <div class="section-title">Training Progress${dayNum ? ' · Day ' + dayNum : ''}</div>
         <div class="section-sub">${weekNum ? 'Week ' + weekNum + ' · ' : ''}${totalCompleted} workout${totalCompleted !== 1 ? 's' : ''} logged</div>
       </div>
     </div>
     <div class="stats-grid mb-6" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
-      <div class="stat-card"><div class="stat-value" style="color:var(--accent)">${totalCompleted}</div><div class="stat-label">Workouts Done</div><div class="stat-sub">Since sabbatical start</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--accent)">${totalCompleted}</div><div class="stat-label">Workouts Done</div><div class="stat-sub">Since program start</div></div>
       <div class="stat-card"><div class="stat-value">${recentActivities}</div><div class="stat-label">This Week</div><div class="stat-sub">Last 7 days</div></div>
       <div class="stat-card"><div class="stat-value">${totalSetsLogged}</div><div class="stat-label">Sets Logged</div><div class="stat-sub">Total across all sessions</div></div>
       ${Object.entries(typeCounts).map(([t,n]) => `
@@ -1737,10 +1737,10 @@ function renderOGProgression() {
     </div>`;
 }
 
-function buildSabbaticalActivityChart() {
-  const canvas = document.getElementById('sabbaticalActivityChart');
+function buildActivityChart() {
+  const canvas = document.getElementById('activityChart');
   if (!canvas) return;
-  if (_sabbaticalChartInstance) { _sabbaticalChartInstance.destroy(); _sabbaticalChartInstance = null; }
+  if (_activityChartInstance) { _activityChartInstance.destroy(); _activityChartInstance = null; }
 
   const activities = state.garminActivities?.length > 0 ? state.garminActivities : WORKOUT_DATA.garmin_activities;
   const typeCounts = {};
@@ -1751,7 +1751,7 @@ function buildSabbaticalActivityChart() {
   const data = Object.values(typeCounts);
   const colors = labels.map(l => colorMap[l] || 'rgba(125,132,148,0.6)');
 
-  _sabbaticalChartInstance = new Chart(canvas, {
+  _activityChartInstance = new Chart(canvas, {
     type: 'doughnut',
     data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 2 }] },
     options: { responsive:true, maintainAspectRatio:false, cutout:'60%',
@@ -2600,7 +2600,7 @@ function normalizeGarminType(type) {
 }
 
 // ====================== AI COACH ======================
-const SYSTEM_PROMPT = `You are Coach Claude — Marko's personal AI fitness coach for his sabbatical. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
+const SYSTEM_PROMPT = `You are Coach Claude — Marko's personal AI fitness coach. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
 
 ═══ COACHING PROTOCOL — FOLLOW THIS EVERY TIME ═══
 
@@ -2637,7 +2637,7 @@ Before responding to ANY message, run this mental checklist:
    - Keep it concise — Marko is athletic and doesn't need hand-holding
 
 ═══ ATHLETE PROFILE ═══
-Name: Marko | Starting sabbatical Apr 2026
+Name: Marko | Training since Apr 2026
 Training history: 110 gym sessions Oct 2024–Apr 2026, PPL split
 Peak lifts: Bench 165 lbs, Squat 195 lbs, Leg Press 450 lbs, OHP 110 lbs (machine)
 Pull-ups: 5×5 bodyweight — strong vertical pull base
@@ -2714,7 +2714,7 @@ Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'
 - Also cycles (1hr sessions), hikes regularly
 - Strong aerobic base; leg strength is exceptional (great for hiking/adventures)
 
-═══ SABBATICAL SETUP ═══
+═══ TRAINING SETUP ═══
 - Equipment: yoga mat, elevated surfaces; possibly rings, pull-up bar, push-up bars, bands
 - Goal: Maintain strength, "boundless energy" for adventure (hike, bike, swim, climb)
 - 12-week program structure: Mon Push / Tue Cardio / Wed Pull / Thu Adventure / Fri Legs / Sat Long Cardio / Sun Rest
@@ -2857,7 +2857,7 @@ function executeTool(name, input) {
         if (!w.completed) w.note = input.note;
       }
       saveState();
-      const sched = SABBATICAL_SCHEDULE[input.schedIdx];
+      const sched = TRAINING_SCHEDULE[input.schedIdx];
       if (state.currentTab === 'calendar') renderCalendar();
       return { success: true, updated: input.date, workout: sched.name };
     }
@@ -2881,7 +2881,7 @@ function executeTool(name, input) {
           const w = getWdata(change.date);
           w.note = change.note;
         }
-        applied.push({ date: change.date, workout: SABBATICAL_SCHEDULE[change.schedIdx].name });
+        applied.push({ date: change.date, workout: TRAINING_SCHEDULE[change.schedIdx].name });
       }
       saveState();
       syncToSupabase(false);
@@ -2932,7 +2932,7 @@ function formatToolAction({ name, input, result }) {
   const icon = icons[name] || '🔧';
   switch (name) {
     case 'update_schedule':
-      return `${icon} **Plan updated:** ${input.date} → ${SABBATICAL_SCHEDULE[input.schedIdx]?.name}`;
+      return `${icon} **Plan updated:** ${input.date} → ${TRAINING_SCHEDULE[input.schedIdx]?.name}`;
     case 'log_workout':
       return `${icon} **Logged:** ${input.date}${input.substitution ? ' · ' + input.substitution : ''}${input.completed ? ' · marked complete' : ''}`;
     case 'reschedule_week': {
@@ -3127,7 +3127,7 @@ function loadSettings() {
   const s = state.settings || {};
   // Prefer state.settings.apiKey; fall back to old separate localStorage key for migration
   document.getElementById('apiKeyInput').value = s.apiKey || localStorage.getItem('marko_api_key') || '';
-  document.getElementById('sabbaticalStart').value = s.sabbaticalStart || '';
+  document.getElementById('programStart').value = s.programStart || '';
   document.getElementById('userName').value = s.userName || 'Marko';
   document.getElementById('modelSelect').value = s.model || 'claude-sonnet-4-6';
   const eq = s.equipment || {};
@@ -3150,7 +3150,7 @@ function saveSettings() {
 
   state.settings = {
     apiKey: apiKey,
-    sabbaticalStart: document.getElementById('sabbaticalStart').value,
+    programStart: document.getElementById('programStart').value,
     userName: document.getElementById('userName').value || 'Marko',
     model: document.getElementById('modelSelect').value,
     equipment: {
@@ -3176,7 +3176,7 @@ function saveSettings() {
 }
 
 function updateDayCounter() {
-  const start = state.settings?.sabbaticalStart;
+  const start = state.settings?.programStart;
   if (start) {
     const days = Math.floor((new Date() - new Date(start)) / 86400000) + 1;
     const week = Math.ceil(days / 7);
