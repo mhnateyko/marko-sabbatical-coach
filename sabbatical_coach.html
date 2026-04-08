@@ -1357,6 +1357,58 @@ const SABBATICAL_SCHEDULE = [
   }
 ];
 
+// ====================== EQUIPMENT SUBSTITUTIONS ======================
+// For each exercise that requires specific gear, define what to show instead
+// when the user doesn't have it. Keys match state.settings.equipment keys.
+// requiresAny: user needs at least ONE of these. alternatives tried in order.
+const EQUIPMENT_SUBS = {
+  face_pull: {
+    requiresAny: ['bands'],
+    alternatives: [
+      { needs: ['rings'], ex: { name: 'Ring Face Pulls + Scap Push-ups', target: '3 × 15–20', note: 'Set rings at face height. Pull ring to face, elbows high and wide. Same rear-delt + shoulder health work as band version.', advanceWhen: 'N/A — do every session forever' } },
+      { needs: [],        ex: { name: 'Scap Push-ups + Wall Slides',     target: '3 × 15 each', note: 'Scap push-ups: protract/retract in push-up plank. Wall slides: forearms on wall, slide up/down. Covers the shoulder health intent without any equipment.', advanceWhen: 'N/A — do every session forever' } }
+    ]
+  },
+  pull_aparts: {
+    requiresAny: ['bands'],
+    alternatives: [
+      { needs: ['rings'], ex: { name: 'Ring Reverse Fly',          target: '3 × 15–20', note: 'Stand tall, rings at chest height. Open arms wide, squeeze rear delts at end range. Harder than band pull-aparts — excellent posture work.', advanceWhen: 'N/A — do daily' } },
+      { needs: [],        ex: { name: 'Prone Y/T Raises',          target: '3 × 12–15', note: 'Lie face down, raise arms in a Y shape, then a T shape. Direct rear delt + lower trap activation. No equipment. Add weight (books, bottle) when easy.', advanceWhen: 'N/A — do daily' } }
+    ]
+  },
+  dislocates: {
+    requiresAny: ['bands'],
+    alternatives: [
+      { needs: ['rings'], ex: { name: 'Ring-Assisted Dislocates + Floor YTW', target: '2 × 10 each', note: 'Use ring straps for shoulder pass-through mobility. Then floor YTW: Y=arms overhead, T=arms out, W=elbows bent. OG shoulder bulletproofing without bands.', advanceWhen: 'N/A — shoulder mobility' } },
+      { needs: [],        ex: { name: 'Overhead Reach + Floor YTW',          target: '2 × 10 each', note: 'Overhead reach with thoracic rotation (10 each side), then floor YTW lying face down. Covers the shoulder mobility intent completely without equipment.', advanceWhen: 'N/A — shoulder mobility' } }
+    ]
+  },
+  curls: {
+    requiresAny: ['bands', 'rings'], // either works — rings are the primary tool
+    alternatives: [
+      { needs: [],        ex: { name: 'Towel / Bodyweight Curl Rows', target: '3 × 10–15', note: 'Loop a towel around a door handle or pole. Lean back, curl toward handle with underhand grip. Surprisingly effective bicep load with zero equipment.', advanceWhen: 'N/A — elbow health accessory' } }
+    ]
+  }
+};
+
+// Returns the exercise as-is if equipment is available, otherwise the best substitute.
+// Returns null if the exercise should be skipped entirely.
+function resolveExercise(ex) {
+  const sub = EQUIPMENT_SUBS[ex.id];
+  if (!sub) return ex; // no substitution needed for this exercise
+  const eq = state.settings?.equipment || {};
+  const hasRequired = sub.requiresAny.some(key => !!eq[key]);
+  if (hasRequired) return ex; // user has the gear — use the original
+  // Find the best alternative the user can actually do
+  for (const alt of sub.alternatives) {
+    const canDo = alt.needs.every(key => !!eq[key]);
+    if (canDo) {
+      return { ...ex, ...alt.ex, _substituted: true, _originalName: ex.name };
+    }
+  }
+  return null; // no viable alternative — skip the exercise
+}
+
 // ====================== HELPERS ======================
 function dateKey(d) { return d.toISOString().split('T')[0]; }
 function todayKey() { return dateKey(new Date()); }
@@ -1866,11 +1918,16 @@ function renderTracker(dk) {
   const ogTypeLabel = { skill:'SKILL', strength:'STRENGTH', accessory:'ACCESSORY', core:'CORE', prehab:'PREHAB' };
   const ogTypeClass = { skill:'type-skill', strength:'type-strength', accessory:'type-accessory', core:'type-core', prehab:'type-prehab' };
 
-  for (const ex of sched.exercises) {
-    const sets = (wdata.sets && wdata.sets[ex.id]) || initSets(ex.defaultSets);
+  for (const rawEx of sched.exercises) {
+    const ex = resolveExercise(rawEx);
+    if (!ex) continue; // no viable version for current equipment — skip
+    const sets = (wdata.sets && wdata.sets[rawEx.id]) || initSets(rawEx.defaultSets);
     const exDone = sets.some(s => s.done);
+    const subBadge = ex._substituted
+      ? `<div style="font-size:10px;margin-top:5px;color:var(--warn);background:rgba(184,110,10,0.08);border:1px solid rgba(184,110,10,0.2);padding:3px 7px;border-radius:4px;display:inline-block;">↔ Substituted — ${ex._originalName} needs equipment you don't have</div>`
+      : '';
     html += `
-      <div class="tracker-exercise" id="exblock-${ex.id}" style="${exDone ? 'border-color:rgba(34,197,94,0.4)' : ''}">
+      <div class="tracker-exercise" id="exblock-${rawEx.id}" style="${exDone ? 'border-color:rgba(34,197,94,0.4)' : ''}">
         <div class="tracker-ex-header">
           <div>
             <span class="tracker-ex-type ${ogTypeClass[ex.ogType]}">${ogTypeLabel[ex.ogType]}</span>
@@ -1880,6 +1937,7 @@ function renderTracker(dk) {
             <div class="tracker-ex-target">${ex.target}</div>
             <div class="tracker-ex-note">${ex.note}</div>
             ${ex.advanceWhen !== 'N/A' && ex.advanceWhen ? `<div style="font-size:10px;margin-top:4px;color:var(--accent);background:rgba(0,212,170,0.08);padding:3px 6px;border-radius:4px;display:inline-block">⬆ Advance when: ${ex.advanceWhen}</div>` : ''}
+            ${subBadge}
           </div>
         </div>
         <div class="set-table">
