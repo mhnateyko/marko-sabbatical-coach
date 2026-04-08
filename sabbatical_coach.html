@@ -1761,6 +1761,8 @@ function renderCalendar() {
     if (wdata.completed) cls.push('cal-done');
     else if (isPast && !isToday) cls.push('cal-past');
 
+    const isOverride = (state.overrides || {})[dk] !== undefined;
+
     // Right-side status
     let statusHtml = '';
     if (wdata.completed) {
@@ -1773,6 +1775,10 @@ function renderCalendar() {
       ? wdata.note.substring(0, 60) + (wdata.note.length > 60 ? '…' : '')
       : '';
 
+    // Type label — append a small "modified" tag if this day has been AI-overridden
+    const typeLabel = sched.type.toUpperCase()
+      + (isOverride ? ' <span style="font-size:8px;font-weight:700;background:rgba(14,158,118,0.12);color:var(--accent);border-radius:3px;padding:1px 4px;letter-spacing:0.3px;vertical-align:middle;">adjusted</span>' : '');
+
     html += `
       <div class="${cls.join(' ')}" onclick="openDayTracker('${dk}')">
         <div class="cal-day-stripe" style="background:${typeStripe[sched.type]};"></div>
@@ -1782,7 +1788,7 @@ function renderCalendar() {
         </div>
         <div class="cal-day-right">
           <div class="cal-day-main">
-            <div class="cal-day-type-label" style="color:${typeColor[sched.type]}">${sched.type.toUpperCase()}</div>
+            <div class="cal-day-type-label" style="color:${typeColor[sched.type]}">${typeLabel}</div>
             <div class="cal-day-workout-name">${sched.name}</div>
             ${noteText ? `<div class="cal-day-note">${noteText}</div>` : ''}
           </div>
@@ -2074,14 +2080,22 @@ function buildPostWorkoutContext(dk) {
     }
   }
 
-  // Next 14 days plan
+  // Next 14 days plan — include override status and existing notes so the AI
+  // can see what has already been changed and won't create conflicting proposals
   const upcoming = [];
+  const overrides = state.overrides || {};
   for (let i = 1; i <= 14; i++) {
     const day = new Date(d); day.setDate(d.getDate() + i);
     const dk2 = dateKey(day);
     const s2 = getScheduleForDate(day);
-    const done2 = (state.workouts[dk2] || {}).completed;
-    upcoming.push(`  ${dk2} (${day.toLocaleDateString('en-US',{weekday:'short'})}): ${s2.name}${done2 ? ' [completed]' : ''}`);
+    const w2 = state.workouts[dk2] || {};
+    const isOverride = overrides[dk2] !== undefined;
+    const tags = [];
+    if (w2.completed) tags.push('completed');
+    if (isOverride) tags.push('AI-modified from default');
+    if (w2.note) tags.push(`note: "${w2.note}"`);
+    const tagStr = tags.length ? ` [${tags.join(' · ')}]` : '';
+    upcoming.push(`  ${dk2} (${day.toLocaleDateString('en-US',{weekday:'short'})}): ${s2.name}${tagStr}`);
   }
 
   return `COMPLETED SESSION
@@ -2242,6 +2256,12 @@ function applyPlanChanges(changes) {
   if (!state.overrides) state.overrides = {};
   for (const c of changes) {
     state.overrides[c.date] = c.schedIdx;
+    // Write the reason as the note so it always reflects WHY this day was changed.
+    // This replaces any stale note from a previous AI proposal.
+    const w = getWdata(c.date);
+    if (!w.completed) { // never overwrite notes on already-completed days
+      w.note = c.reason || '';
+    }
   }
   saveState();
   if (state.currentTab === 'calendar') renderCalendar();
@@ -2757,7 +2777,8 @@ function executeTool(name, input) {
       state.overrides[input.date] = input.schedIdx;
       if (input.note) {
         const w = getWdata(input.date);
-        w.note = (w.note ? w.note + ' ' : '') + input.note;
+        // Replace note entirely — appending creates stale contradictions on re-planning
+        if (!w.completed) w.note = input.note;
       }
       saveState();
       const sched = SABBATICAL_SCHEDULE[input.schedIdx];
