@@ -274,6 +274,7 @@
   .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
   .cal-title { font-size: 15px; font-weight: 700; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: 10px; overflow: hidden; }
+  .cal-placeholder-hdr, .cal-placeholder-day { display: none; }
   .cal-header-cell { background: var(--card2); padding: 9px 4px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
   .cal-cell { background: var(--card); padding: 8px 7px; min-height: 82px; cursor: pointer; transition: background 0.12s; position: relative; }
   .cal-cell:hover { background: var(--card2); }
@@ -363,7 +364,9 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
     /* CALENDAR */
-    .cal-grid { grid-template-columns: repeat(7, 1fr); }
+    .cal-grid { grid-template-columns: repeat(4, 1fr); }
+    .cal-placeholder-hdr { display: block; background: var(--card2); }
+    .cal-placeholder-day { display: block; background: var(--bg); border: none; cursor: default; min-height: 0 !important; padding: 0 !important; }
     .cal-header-cell { padding: 7px 2px; font-size: 9px; letter-spacing: 0; }
     .cal-cell { min-height: 68px; padding: 6px 4px; -webkit-tap-highlight-color: rgba(14,158,118,0.12); }
     .cal-day-num { font-size: 12px; margin-bottom: 3px; }
@@ -485,24 +488,29 @@
     <!-- Gym → Bodyweight transition -->
     <div class="card mb-6" style="border-left: 3px solid var(--accent);">
       <div class="card-title">Gym → Bodyweight Transition</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+      <div class="grid-2" style="align-items:start;">
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:10px;">What you built in 17 months</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
-              <span style="color:var(--muted)">Bench peak</span><strong>165 lb → Ring dip / archer push-up</strong>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Bench peak</div>
+              <strong>165 lb → Ring dip / archer push-up</strong>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
-              <span style="color:var(--muted)">OHP peak</span><strong>110 lb → Pike push-up → HSPU</strong>
+            <div style="font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">OHP peak</div>
+              <strong>110 lb → Pike push-up → HSPU</strong>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
-              <span style="color:var(--muted)">Pull-ups</span><strong>5×5 BW → L-sit pull-up → Archer</strong>
+            <div style="font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Pull-ups</div>
+              <strong>5×5 BW → L-sit pull-up → Archer</strong>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
-              <span style="color:var(--muted)">Squat 195 lb</span><strong>Box pistol → Full pistol squat</strong>
+            <div style="font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Squat</div>
+              <strong>195 lb → Box pistol → Full pistol</strong>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
-              <span style="color:var(--muted)">Leg press 450 lb</span><strong>BSS → Nordic curl → Shrimp squat</strong>
+            <div style="font-size:13px;padding:8px 10px;background:var(--card2);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Leg press</div>
+              <strong>450 lb → BSS → Nordic → Shrimp squat</strong>
             </div>
           </div>
         </div>
@@ -598,7 +606,7 @@
     <!-- Equipment -->
     <div class="plan-grid mb-6">
       <div class="card">
-        <div class="card-title">🎯 Recommended Equipment</div>
+        <div class="card-title">Recommended Equipment</div>
         <p class="text-sm text-muted mb-4" style="line-height:1.6;">High-leverage, low-profile gear. Total investment: ~$100–$180. Fits in a backpack.</p>
         <ul class="equipment-list">
           <li class="equipment-item">
@@ -645,7 +653,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">🔄 Gym → Bodyweight Translation</div>
+        <div class="card-title">Gym → Bodyweight Translation</div>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
           <div style="background:var(--card2);border-radius:8px;padding:12px;">
             <div style="font-size:12px;color:var(--push);font-weight:700;margin-bottom:6px;">PUSH MUSCLES (Chest/Shoulders/Triceps)</div>
@@ -682,14 +690,14 @@
 
     <!-- Phase Timeline -->
     <div class="card mb-6">
-      <div class="card-title">📅 12-Week Program — Overcoming Gravity Phases</div>
+      <div class="card-title">12-Week Program — Overcoming Gravity Phases</div>
       <div style="background:var(--card2);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--muted);">
         <strong style="color:var(--accent);">OG Progression Rule:</strong> You advance to the next harder variation only when you can hit <strong style="color:var(--text);">3 sets of 5 clean reps</strong> (strength work) or <strong style="color:var(--text);">3 sets of 8 clean reps</strong> (hypertrophy work) at your current level. Quality over speed — always. Tendons adapt 3–10× slower than muscles. Earn each progression.
       </div>
       <div class="phase-timeline">
         <div class="phase-card p1">
           <div class="phase-weeks">Weeks 1–4 · OG Foundation</div>
-          <div class="phase-name">🌱 Accumulate</div>
+          <div class="phase-name">Accumulate</div>
           <div class="phase-goal">Build quality volume at your current level in all 6 movement patterns. Establish the OG session structure: skill → strength → accessory. Learn hollow body, L-sit holds, and ring row positioning. Zone 2 aerobic base (3×/week).</div>
           <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
           <div style="font-size:12px;color:var(--text);">Primary: 3–4 × 5–8 reps &nbsp;·&nbsp; Accessory: 3 × 10–15 reps</div>
@@ -701,7 +709,7 @@
         </div>
         <div class="phase-card p2">
           <div class="phase-weeks">Weeks 5–8 · OG Progress</div>
-          <div class="phase-name">⚡ Advance</div>
+          <div class="phase-name">Advance</div>
           <div class="phase-goal">Move up one level in each pattern where you've hit the rep standard. Introduce ring dips, elevated pike push-ups, box pistols, Nordic negatives, L-sit on bars. Add one threshold run per week.</div>
           <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
           <div style="font-size:12px;color:var(--text);">Primary: 4 × 5–8 reps &nbsp;·&nbsp; Add harder variations at 3×3–5 first</div>
@@ -713,7 +721,7 @@
         </div>
         <div class="phase-card p3">
           <div class="phase-weeks">Weeks 9–12 · OG Peak</div>
-          <div class="phase-name">🔥 Consolidate</div>
+          <div class="phase-name">Consolidate</div>
           <div class="phase-goal">Advance to highest earned level. Full wall HSPU, archer rows, L-sit on rings, full pistol squats, partial Nordic curls. Build volume at peak levels. Adventure-ready fitness — all-day hiking, cycling, swimming, climbing.</div>
           <div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">REP TARGET THIS PHASE</div>
           <div style="font-size:12px;color:var(--text);">Primary: 4–5 × 5–8 reps &nbsp;·&nbsp; Volume: 25–50 reps/pattern/session</div>
@@ -728,48 +736,41 @@
 
     <!-- Weekly Template -->
     <div class="card mb-6">
-      <div class="card-title">📆 Weekly Template — Flexible Around Adventures</div>
+      <div class="card-title">Weekly Template — Flexible Around Adventures</div>
       <p class="text-sm text-muted mb-4" style="line-height:1.6;">This is a <em>template</em>, not a rigid schedule. If you're hiking all day, that counts as leg day + cardio. If you go mountain biking, that's cardio. Tell your AI Coach what you actually did and it will adapt the plan.</p>
       <div class="week-grid">
         <div class="day-card">
           <div class="day-name">Mon</div>
-          <div class="day-emoji">💪</div>
           <div class="day-type push">Upper Push</div>
           <div class="day-detail">Push-ups, Ring Dips, Pike OHP, Core</div>
         </div>
         <div class="day-card">
           <div class="day-name">Tue</div>
-          <div class="day-emoji">🏃</div>
           <div class="day-type cardio">Cardio</div>
           <div class="day-detail">Easy run 3–5 mi or bike or swim</div>
         </div>
         <div class="day-card">
           <div class="day-name">Wed</div>
-          <div class="day-emoji">🔄</div>
           <div class="day-type pull">Upper Pull</div>
           <div class="day-detail">Pull-ups, Ring Rows, Face Pulls, Curls</div>
         </div>
         <div class="day-card">
           <div class="day-name">Thu</div>
-          <div class="day-emoji">🌍</div>
           <div class="day-type flex">Adventure</div>
           <div class="day-detail">Hike, explore, yoga, active recovery</div>
         </div>
         <div class="day-card">
           <div class="day-name">Fri</div>
-          <div class="day-emoji">🦵</div>
           <div class="day-type legs">Lower Body</div>
           <div class="day-detail">Split squats, Nordic curls, Calf raises</div>
         </div>
         <div class="day-card">
           <div class="day-name">Sat</div>
-          <div class="day-emoji">🚴</div>
           <div class="day-type cardio">Cardio+</div>
           <div class="day-detail">Longer effort or adventure activity</div>
         </div>
         <div class="day-card">
           <div class="day-name">Sun</div>
-          <div class="day-emoji">😴</div>
           <div class="day-type rest">Rest</div>
           <div class="day-detail">Walk, stretch, yoga</div>
         </div>
@@ -778,7 +779,7 @@
 
     <!-- OG Progression Ladders -->
     <div class="card mb-6">
-      <div class="card-title">🪜 OG Progression Ladders — All 6 Movement Patterns</div>
+      <div class="card-title">OG Progression Ladders — All 6 Movement Patterns</div>
       <p class="text-sm text-muted mb-4" style="line-height:1.6;">
         Based on Steven Low's <em>Overcoming Gravity</em> rating scale. <strong style="color:var(--accent)">Your starting level is marked ★</strong>. Advance only when you hit <strong style="color:var(--text)">3×8 clean reps</strong> at current level (or 3×5 for harder skills). Never skip levels — tendons adapt 3–10× slower than muscles.
       </p>
@@ -885,7 +886,7 @@
             <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
           </div>
           <div class="ex-row" style="border-left:3px solid var(--accent);">
-            <div><div class="ex-name">🎯 SKILL: Wall Handstand Hold</div><div class="ex-equiv">V-Push skill — CNS fresh, do first</div></div>
+            <div><div class="ex-name">SKILL: Wall Handstand Hold</div><div class="ex-equiv">V-Push skill — CNS fresh, do first</div></div>
             <div class="ex-sets">3 × 20–60s</div>
             <div class="ex-notes">Kick up to wall, straight body, shoulders shrugged into ears. Not a push — just holding. Builds proprioception for eventual HSPU. Rest 90s between holds.</div>
           </div>
@@ -928,7 +929,7 @@
             <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
           </div>
           <div class="ex-row" style="border-left:3px solid var(--accent);">
-            <div><div class="ex-name">🎯 SKILL: Dead Hang + Scapular Pulls</div><div class="ex-equiv">Shoulder prep and straight-arm strength</div></div>
+            <div><div class="ex-name">SKILL: Dead Hang + Scapular Pulls</div><div class="ex-equiv">Shoulder prep and straight-arm strength</div></div>
             <div class="ex-sets">3 × 30–60s hang + 10 scap pulls</div>
             <div class="ex-notes">Dead hang: full passive hang, relax everything. Scapular pull: from dead hang, depress shoulders without bending elbows — this activates the lats before strength work. Essential OG warm-up.</div>
           </div>
@@ -971,7 +972,7 @@
             <div>EXERCISE</div><div>SETS × REPS</div><div>OG NOTES / ADVANCE WHEN</div>
           </div>
           <div class="ex-row" style="border-left:3px solid var(--accent);">
-            <div><div class="ex-name">🎯 SKILL: Pistol Squat Progression</div><div class="ex-equiv">OG Skill — do first, fresh legs</div></div>
+            <div><div class="ex-name">SKILL: Pistol Squat Progression</div><div class="ex-equiv">OG Skill — do first, fresh legs</div></div>
             <div class="ex-sets">3 × 3–5 / leg</div>
             <div class="ex-notes">Wk1-4: Sit to a low box, stand up one-legged. Wk5-8: Wall-assisted partial pistol. Wk9+: Full pistol. Your 195-lb squat means you have the strength — just learn the pattern. Rest 90s.</div>
           </div>
@@ -1105,7 +1106,7 @@
             <button class="quick-btn" onclick="sendQuick('I went hiking all day, about 6 miles with 1500ft elevation gain')">🥾 Went hiking</button>
             <button class="quick-btn" onclick="sendQuick('What should I do for today\'s workout if I only have 20 minutes?')">⏱ Only 20 min</button>
             <button class="quick-btn" onclick="sendQuick('My shoulders are sore — what can I modify today?')">💆 Sore shoulders</button>
-            <button class="quick-btn" onclick="sendQuick('I feel really energized today, can I add more volume?')">⚡ Extra energy</button>
+            <button class="quick-btn" onclick="sendQuick('I feel really energized today, can I add more volume?')">Extra energy</button>
             <button class="quick-btn" onclick="sendQuick('Suggest a hotel room workout — no equipment at all')">🏨 Hotel room</button>
           </div>
           <div class="input-row">
@@ -1142,10 +1143,10 @@
           <div id="weekSummary" style="font-size:13px;color:var(--muted);line-height:1.8;">Loading...</div>
         </div>
         <div class="side-card">
-          <div class="card-title">🎯 Sabbatical Goals</div>
+          <div class="card-title">Sabbatical Goals</div>
           <div style="font-size:13px;line-height:1.8;color:var(--text);">
             💪 Maintain strength<br>
-            ⚡ Boundless energy<br>
+            Boundless energy<br>
             🌍 Adventure-ready<br>
             🧘 Mind-body balance<br>
             🏔 Hike, bike, swim, explore
@@ -1732,6 +1733,7 @@ function renderCalendar() {
     html += `<div class="cal-week-label ${isCurrentWeek ? 'style="background:rgba(0,212,170,0.07)"' : ''}">${isCurrentWeek ? '▶ ' : ''}Week of ${fmtDateShort(weekStart)} – ${fmtDateShort(weekEnd)}</div>`;
     html += `<div class="cal-grid" style="margin-bottom:20px;">`;
     html += ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+    html += '<div class="cal-header-cell cal-placeholder-hdr"></div>';
 
     for (let d = 0; d < 7; d++) {
       const day = new Date(weekStart); day.setDate(weekStart.getDate() + d);
@@ -1757,12 +1759,13 @@ function renderCalendar() {
 
       html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="openDayTracker('${dk}')">
         <div class="cal-day-num">${day.getDate()}</div>
-        <span class="cal-workout-badge ${typeColors[sched.type]}">${sched.emoji} ${sched.name}</span>
+        <span class="cal-workout-badge ${typeColors[sched.type]}">${sched.name}</span>
         ${doneEx > 0 ? `<div style="font-size:10px;color:var(--muted)">${doneEx}/${totalEx} done</div>` : ''}
         ${subLabel}${noteLabel}
         <span class="cal-status">${statusEmoji}</span>
       </div>`;
     }
+    html += '<div class="cal-cell cal-placeholder-day"></div>';
     html += '</div>';
   }
   container.innerHTML = html;
@@ -1808,9 +1811,9 @@ function renderTracker(dk) {
   let html = `
     <div class="tracker-header">
       <button class="tracker-back" onclick="switchTab('calendar')">← Back to Calendar</button>
-      <div class="tracker-date">${isToday ? '📍 Today · ' : ''}${fmtDate(d)}</div>
-      <div class="tracker-wname" style="color:${typeColor}">${sched.emoji} ${sched.name}</div>
-      <div class="tracker-og-note">📖 OG Session Note: ${sched.ogNote}</div>
+      <div class="tracker-date">${isToday ? 'Today · ' : ''}${fmtDate(d)}</div>
+      <div class="tracker-wname" style="color:${typeColor}">${sched.name}</div>
+      <div class="tracker-og-note">OG Session Note: ${sched.ogNote}</div>
       <div class="tracker-progress">
         <div class="tracker-prog-bar"><div class="tracker-prog-fill" id="trackerProgFill" style="width:${pct}%"></div></div>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap">${exWithSets.length}/${sched.exercises.length} exercises · ${pct}%</span>
