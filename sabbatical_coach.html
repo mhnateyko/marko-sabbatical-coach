@@ -1387,6 +1387,15 @@ function loadState() {
       state = { ...state, ...parsed };
     }
   } catch(e) {}
+  // Auto-migrate: move API key from old separate localStorage key into state.settings
+  if (!state.settings) state.settings = {};
+  if (!state.settings.apiKey) {
+    const legacy = localStorage.getItem('marko_api_key');
+    if (legacy) {
+      state.settings.apiKey = legacy;
+      saveState(); // persist migration immediately
+    }
+  }
 }
 
 function saveState() {
@@ -2293,6 +2302,8 @@ async function syncToSupabase(showMsg) {
     // Note: supabaseUrl + supabaseKey are excluded from settings sync — they're the
     // bootstrap credentials and must be entered manually on each new device.
     const { supabaseUrl: _u, supabaseKey: _k, ...settingsToSync } = state.settings || {};
+    // Migration safety net: if apiKey still not in state, grab from old localStorage key
+    if (!settingsToSync.apiKey) settingsToSync.apiKey = localStorage.getItem('marko_api_key') || '';
     const stateRows = [
       { user_id:'marko', key:'garmin_activities', value: state.garminActivities || [] },
       { user_id:'marko', key:'chat_history',      value: state.chatHistory || [] },
@@ -3053,7 +3064,7 @@ function updateDayCounter() {
 }
 
 function checkApiKey() {
-  const hasKey = !!localStorage.getItem('marko_api_key');
+  const hasKey = !!(state.settings?.apiKey || localStorage.getItem('marko_api_key'));
   document.getElementById('apiWarning').style.display = hasKey ? 'none' : 'block';
 }
 
@@ -3118,7 +3129,10 @@ async function init() {
     loadFromSupabase().then(() => {
       buildActivityTable();
       renderCalendar();
+      renderHistoryDynamic();
       updateWeekSummary();
+      checkApiKey(); // re-check now that settings may have loaded from cloud
+      if (state.currentTab === 'settings') loadSettings(); // refresh form if open
     });
   }
 }
