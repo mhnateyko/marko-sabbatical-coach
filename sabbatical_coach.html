@@ -268,31 +268,31 @@
   .prog-std { font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
   .prog-row.current .prog-std { color: var(--accent); font-weight: 700; }
 
-  /* CALENDAR */
-  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  /* CALENDAR — day feed */
   .cal-nav-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 7px; cursor: pointer; font-size: 13px; transition: all 0.15s; font-weight: 500; }
   .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .cal-title { font-size: 15px; font-weight: 700; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: 10px; overflow: hidden; }
-  .cal-placeholder-hdr, .cal-placeholder-day { display: none; }
-  .cal-header-cell { background: var(--card2); padding: 9px 4px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .cal-cell { background: var(--card); padding: 8px 7px; min-height: 82px; cursor: pointer; transition: background 0.12s; position: relative; }
-  .cal-cell:hover { background: var(--card2); }
-  .cal-cell.today { background: rgba(14,158,118,0.05); }
-  .cal-cell.today .cal-day-num { color: var(--accent); font-weight: 800; }
-  .cal-cell.other-month { background: var(--bg); }
-  .cal-cell.other-month .cal-day-num { color: var(--muted); opacity: 0.5; }
-  .cal-day-num { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
-  .cal-workout-badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: 700; display: block; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cal-badge-push { background: rgba(192,57,43,0.1); color: var(--push); }
-  .cal-badge-pull { background: rgba(13,122,138,0.1); color: var(--pull); }
-  .cal-badge-legs { background: rgba(160,114,14,0.1); color: var(--legs); }
-  .cal-badge-cardio { background: rgba(26,122,80,0.1); color: var(--cardio); }
-  .cal-badge-flex { background: rgba(108,63,197,0.1); color: var(--other); }
-  .cal-badge-rest { background: rgba(125,132,148,0.1); color: var(--muted); }
-  .cal-status { position: absolute; top: 6px; right: 6px; font-size: 12px; }
-  .cal-note-preview { font-size: 9px; color: var(--muted); line-height: 1.3; margin-top: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .cal-week-label { background: var(--card2); border-bottom: 1px solid var(--border); padding: 7px 14px; font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; border-radius: 8px 8px 0 0; }
+  .cal-feed { display: flex; flex-direction: column; gap: 3px; }
+  .cal-month-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); padding: 14px 2px 7px; }
+  .cal-month-label:first-child { padding-top: 0; }
+  .cal-week-gap { height: 10px; }
+  .cal-day-card { display: flex; align-items: stretch; background: var(--card); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; cursor: pointer; transition: border-color 0.13s, box-shadow 0.13s; -webkit-tap-highlight-color: rgba(14,158,118,0.1); }
+  .cal-day-card:hover { border-color: rgba(14,158,118,0.4); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .cal-day-card.cal-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .cal-day-card.cal-done { background: rgba(26,122,80,0.025); }
+  .cal-day-card.cal-past:not(.cal-done) { opacity: 0.65; }
+  .cal-day-stripe { width: 4px; flex-shrink: 0; border-radius: 0; }
+  .cal-day-left { padding: 10px 10px; min-width: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-right: 1px solid var(--border); }
+  .cal-day-abbr { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .cal-day-num-big { font-size: 21px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -0.5px; }
+  .cal-today-tag { font-size: 8px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.6px; }
+  .cal-today .cal-day-num-big { color: var(--accent); }
+  .cal-day-right { flex: 1; padding: 10px 13px; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .cal-day-main { flex: 1; min-width: 0; }
+  .cal-day-type-label { font-size: 9px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 2px; }
+  .cal-day-workout-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-day-note { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-day-check { font-size: 14px; font-weight: 900; flex-shrink: 0; line-height: 1; }
+  .cal-day-partial { font-size: 10px; color: var(--warn); font-weight: 700; flex-shrink: 0; text-align: right; white-space: nowrap; }
 
   /* WORKOUT TRACKER */
   .tracker-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
@@ -358,17 +358,9 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
     /* CALENDAR */
-    .cal-grid { grid-template-columns: repeat(4, 1fr); }
-    .cal-placeholder-hdr { display: block; background: var(--card2); }
-    .cal-placeholder-day { display: block; background: var(--bg); border: none; cursor: default; min-height: 0 !important; padding: 0 !important; }
-    .cal-header-cell { padding: 7px 2px; font-size: 9px; letter-spacing: 0; }
-    .cal-cell { min-height: 68px; padding: 6px 4px; -webkit-tap-highlight-color: rgba(14,158,118,0.12); }
-    .cal-day-num { font-size: 12px; margin-bottom: 3px; }
-    .cal-workout-badge { font-size: 9px; padding: 2px 4px; }
-    .cal-note-preview { display: none; }
-    .cal-status { font-size: 11px; top: 4px; right: 4px; }
-    .cal-title { font-size: 14px; }
     .cal-nav-btn { padding: 7px 11px; font-size: 13px; }
+    .cal-day-workout-name { font-size: 13px; }
+    .cal-day-left { min-width: 52px; padding: 10px 8px; }
 
     /* TRACKER */
     .tracker-header { padding: 14px; }
@@ -1040,20 +1032,20 @@
   <div id="tab-calendar" class="tab-content">
     <div class="section-header mb-6">
       <div>
-        <div class="section-title" id="calHeading">Training Calendar</div>
-        <div class="section-sub">Click any day to open its workout tracker · Green = complete · Yellow = partial · Gray = rest</div>
+        <div class="section-title" id="calHeading">Training Log</div>
+        <div class="section-sub">Tap any day to log or review · Plan adapts dynamically as you train</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="cal-nav-btn" onclick="calShift(-7)">← Prev Week</button>
+        <button class="cal-nav-btn" onclick="calShift(-7)">← Earlier</button>
         <button class="cal-nav-btn" onclick="calGoToday()">Today</button>
-        <button class="cal-nav-btn" onclick="calShift(7)">Next Week →</button>
+        <button class="cal-nav-btn" onclick="calShift(7)">Later →</button>
       </div>
     </div>
 
     <div id="calendarContainer"></div>
 
     <div class="card" style="margin-top:20px;">
-      <div class="card-title">📊 3-Week Summary</div>
+      <div class="card-title">3-Week Summary</div>
       <div id="calSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:8px;"></div>
     </div>
   </div>
@@ -1705,79 +1697,108 @@ function calShift(days) { calOffset += days/7; renderCalendar(); }
 function calGoToday() { calOffset = 0; renderCalendar(); }
 
 function renderCalendar() {
-  const typeColors = { push:'cal-badge-push', pull:'cal-badge-pull', legs:'cal-badge-legs', cardio:'cal-badge-cardio', flex:'cal-badge-flex', rest:'cal-badge-rest' };
   const today = new Date(); today.setHours(0,0,0,0);
 
-  // Start from Monday of the current offset week
-  const monday = new Date(today);
-  const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=Mon
-  monday.setDate(today.getDate() - dow + calOffset * 7);
+  // Window: 7 days back from offset + 14 days forward = 21 days centered on today
+  const windowStart = new Date(today);
+  windowStart.setDate(today.getDate() + calOffset * 7 - 7);
 
-  const container = document.getElementById('calendarContainer');
-  const weeks = 3;
-  let html = '';
+  const DAYS = 21;
+  const typeStripe = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--border)' };
+  const typeColor  = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)' };
 
-  for (let w = 0; w < weeks; w++) {
-    const weekStart = new Date(monday); weekStart.setDate(monday.getDate() + w * 7);
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-    const isCurrentWeek = today >= weekStart && today <= weekEnd;
+  let html = '<div class="cal-feed">';
+  let lastMonth = -1;
 
-    html += `<div class="cal-week-label ${isCurrentWeek ? 'style="background:rgba(0,212,170,0.07)"' : ''}">${isCurrentWeek ? '▶ ' : ''}Week of ${fmtDateShort(weekStart)} – ${fmtDateShort(weekEnd)}</div>`;
-    html += `<div class="cal-grid" style="margin-bottom:20px;">`;
-    html += ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-header-cell">${d}</div>`).join('');
-    html += '<div class="cal-header-cell cal-placeholder-hdr"></div>';
-
-    for (let d = 0; d < 7; d++) {
-      const day = new Date(weekStart); day.setDate(weekStart.getDate() + d);
-      const dk = dateKey(day);
-      const sched = getScheduleForDate(day);
-      const wdata = state.workouts[dk] || {};
-      const isToday = dateKey(day) === dateKey(today);
-
-      // Completion status
-      const totalEx = sched.exercises.length;
-      let doneEx = 0;
-      if (wdata.sets) {
-        for (const ex of sched.exercises) {
-          const sets = wdata.sets[ex.id] || [];
-          if (sets.some(s => s.done)) doneEx++;
-        }
-      }
-      const statusEmoji = wdata.completed ? '✅' : doneEx > 0 ? '🟡' : '';
-
-      // Substitution label
-      const noteLabel = wdata.note ? `<div class="cal-note-preview">${wdata.note}</div>` : '';
-
-      html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="openDayTracker('${dk}')">
-        <div class="cal-day-num">${day.getDate()}</div>
-        <span class="cal-workout-badge ${typeColors[sched.type]}">${sched.name}</span>
-        ${doneEx > 0 ? `<div style="font-size:10px;color:var(--muted)">${doneEx}/${totalEx} done</div>` : ''}
-        ${noteLabel}
-        <span class="cal-status">${statusEmoji}</span>
-      </div>`;
-    }
-    html += '<div class="cal-cell cal-placeholder-day"></div>';
-    html += '</div>';
-  }
-  container.innerHTML = html;
-
-  // Summary stats
-  const summary = {};
-  for (let d = 0; d < weeks * 7; d++) {
-    const day = new Date(monday); day.setDate(monday.getDate() + d);
-    const dk = dateKey(day);
+  for (let i = 0; i < DAYS; i++) {
+    const day = new Date(windowStart); day.setDate(windowStart.getDate() + i);
+    const dk  = dateKey(day);
+    const sched = getScheduleForDate(day);
     const wdata = state.workouts[dk] || {};
+    const isToday = dk === dateKey(today);
+    const isPast  = day < today;
+
+    // Month header when month rolls over
+    if (day.getMonth() !== lastMonth) {
+      html += `<div class="cal-month-label">${day.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>`;
+      lastMonth = day.getMonth();
+    }
+
+    // Subtle breathing space at the start of each new week (Monday), so you
+    // can feel the rhythm without it being a rigid grid
+    if (day.getDay() === 1 && i > 0) html += '<div class="cal-week-gap"></div>';
+
+    // Progress
+    const totalEx = sched.exercises.length;
+    let doneEx = 0;
+    if (wdata.sets) {
+      for (const ex of sched.exercises) {
+        if ((wdata.sets[ex.id] || []).some(s => s.done)) doneEx++;
+      }
+    }
+
+    // Card classes
+    const cls = ['cal-day-card'];
+    if (isToday) cls.push('cal-today');
+    if (wdata.completed) cls.push('cal-done');
+    else if (isPast && !isToday) cls.push('cal-past');
+
+    // Right-side status
+    let statusHtml = '';
     if (wdata.completed) {
-      const sched = getScheduleForDate(day);
-      summary[sched.type] = (summary[sched.type] || 0) + 1;
+      statusHtml = `<div class="cal-day-check" style="color:var(--success);">✓</div>`;
+    } else if (doneEx > 0) {
+      statusHtml = `<div class="cal-day-partial">${doneEx}/${totalEx}<br>done</div>`;
+    }
+
+    const noteText = wdata.note
+      ? wdata.note.substring(0, 60) + (wdata.note.length > 60 ? '…' : '')
+      : '';
+
+    html += `
+      <div class="${cls.join(' ')}" onclick="openDayTracker('${dk}')">
+        <div class="cal-day-stripe" style="background:${typeStripe[sched.type]};"></div>
+        <div class="cal-day-left">
+          ${isToday ? '<div class="cal-today-tag">Today</div>' : `<div class="cal-day-abbr">${day.toLocaleDateString('en-US',{weekday:'short'})}</div>`}
+          <div class="cal-day-num-big">${day.getDate()}</div>
+        </div>
+        <div class="cal-day-right">
+          <div class="cal-day-main">
+            <div class="cal-day-type-label" style="color:${typeColor[sched.type]}">${sched.type.toUpperCase()}</div>
+            <div class="cal-day-workout-name">${sched.name}</div>
+            ${noteText ? `<div class="cal-day-note">${noteText}</div>` : ''}
+          </div>
+          ${statusHtml}
+        </div>
+      </div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('calendarContainer').innerHTML = html;
+
+  // Heading
+  const headingEl = document.getElementById('calHeading');
+  if (headingEl) headingEl.textContent = calOffset === 0 ? 'Training Log' : (() => {
+    const end = new Date(windowStart); end.setDate(windowStart.getDate() + DAYS - 1);
+    return `${fmtDateShort(windowStart)} – ${fmtDateShort(end)}`;
+  })();
+
+  // 3-week summary stats
+  const summary = {};
+  for (let i = 0; i < DAYS; i++) {
+    const day = new Date(windowStart); day.setDate(windowStart.getDate() + i);
+    const dk  = dateKey(day);
+    if ((state.workouts[dk] || {}).completed) {
+      const s = getScheduleForDate(day);
+      summary[s.type] = (summary[s.type] || 0) + 1;
     }
   }
-  const typeNames = { push:'Push Days', pull:'Pull Days', legs:'Leg Days', cardio:'Cardio', flex:'Adventure', rest:'Rest' };
-  const typeCol = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)' };
+  const typeNames = { push:'Push', pull:'Pull', legs:'Legs', cardio:'Cardio', flex:'Adventure', rest:'Rest' };
+  const typeCol   = { push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)' };
   const total = Object.values(summary).reduce((a,b)=>a+b,0);
-  let sumHtml = `<div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Completed (${weeks} wks)</div></div>`;
-  for (const [type, count] of Object.entries(summary)) {
-    sumHtml += `<div class="stat-card"><div class="stat-value" style="color:${typeCol[type]}">${count}</div><div class="stat-label">${typeNames[type]}</div></div>`;
+  let sumHtml = `<div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Done · 3 weeks</div></div>`;
+  for (const [t, count] of Object.entries(summary)) {
+    sumHtml += `<div class="stat-card"><div class="stat-value" style="color:${typeCol[t]}">${count}</div><div class="stat-label">${typeNames[t]}</div></div>`;
   }
   document.getElementById('calSummary').innerHTML = sumHtml;
 }
