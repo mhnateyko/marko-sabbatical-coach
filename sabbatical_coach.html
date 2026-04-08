@@ -2086,10 +2086,14 @@ ${upcoming.join('\n')}`;
 }
 
 async function analyzeAndProposeChanges(dk) {
-  const apiKey = state.settings?.apiKey;
-  if (!apiKey) return;
+  // API key: check state.settings first, then legacy localStorage key
+  const apiKey = state.settings?.apiKey || localStorage.getItem('marko_api_key') || '';
+  if (!apiKey) {
+    showToast('Add your Anthropic API key in Settings to enable post-workout plan review', 4000);
+    return;
+  }
 
-  showToast('Analyzing session…', 15000);
+  showToast('Analyzing session…', 20000);
 
   let proposal = null;
   try {
@@ -2099,23 +2103,30 @@ async function analyzeAndProposeChanges(dk) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
-        'anthropic-dangerous-client-side-request-id': 'sabbatical-post-workout'
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 800,
+        model: state.settings?.model || 'claude-sonnet-4-6',
+        max_tokens: 1024,
         system: POST_WORKOUT_SYSTEM,
         tools: [POST_WORKOUT_TOOL],
         tool_choice: { type: 'any' },
         messages: [{ role: 'user', content: buildPostWorkoutContext(dk) }]
       })
     });
-    if (!response.ok) throw new Error('API error');
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+    }
+
     const data = await response.json();
     const toolBlock = data.content?.find(b => b.type === 'tool_use' && b.name === 'propose_schedule_changes');
     if (toolBlock) proposal = toolBlock.input;
   } catch(e) {
     hideToast();
+    showToast(`Plan review failed: ${e.message}`, 5000);
+    console.error('Post-workout analysis error:', e);
     return;
   }
 
