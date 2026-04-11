@@ -364,7 +364,7 @@
   .tracker-prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
   .tracker-finish-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 13px 24px; cursor: pointer; font-weight: 700; font-size: 14px; width: 100%; margin-top: 14px; transition: opacity 0.2s; }
   .tracker-finish-btn:hover { opacity: 0.88; }
-
+  .bottom-nav { display: none; } /* hidden on desktop; shown by mobile media query below */
 
   @media (max-width: 768px) {
     /* HEADER */
@@ -495,9 +495,6 @@
   .activity-log-btn:hover { opacity: 0.88; }
   .activity-cancel-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 7px; padding: 10px 14px; cursor: pointer; font-size: 12px; margin-left: 8px; touch-action: manipulation; }
   .cal-activity-badge { font-size: 9px; font-weight: 800; background: rgba(14,158,118,0.15); color: var(--accent); border-radius: 8px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
-
-  /* BOTTOM NAV (desktop: hidden) */
-  .bottom-nav { display: none; }
 
   /* SYNC STATUS */
   .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
