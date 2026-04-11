@@ -3052,11 +3052,9 @@ function executeTool(name, input) {
     case 'update_schedule': {
       if (!state.overrides) state.overrides = {};
       state.overrides[input.date] = input.schedIdx;
-      if (input.note) {
-        const w = getWdata(input.date);
-        // Replace note entirely — appending creates stale contradictions on re-planning
-        if (!w.completed) w.note = input.note;
-      }
+      const w_us = getWdata(input.date);
+      // Always overwrite the note so stale reasons from prior adjustments don't persist
+      if (!w_us.completed) w_us.note = input.note || '';
       saveState();
       const sched = TRAINING_SCHEDULE[input.schedIdx];
       if (state.currentTab === 'calendar') renderCalendar();
@@ -3078,10 +3076,9 @@ function executeTool(name, input) {
       const applied = [];
       for (const change of (input.changes || [])) {
         state.overrides[change.date] = change.schedIdx;
-        if (change.note) {
-          const w = getWdata(change.date);
-          w.note = change.note;
-        }
+        const w_rw = getWdata(change.date);
+        // Always overwrite so stale notes from prior adjustments don't persist
+        if (!w_rw.completed) w_rw.note = change.note || '';
         applied.push({ date: change.date, workout: TRAINING_SCHEDULE[change.schedIdx].name });
       }
       saveState();
