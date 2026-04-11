@@ -1136,16 +1136,10 @@
 
   <!-- ======== CALENDAR TAB ======== -->
   <div id="tab-calendar" class="tab-content">
-    <div class="section-header mb-6">
-      <div>
-        <div class="section-title" id="calHeading">Training Log</div>
-        <div class="section-sub">Tap any day to log or review · Plan adapts dynamically as you train</div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="cal-nav-btn" onclick="calShift(-7)">← Earlier</button>
-        <button class="cal-nav-btn" onclick="calGoToday()">Today</button>
-        <button class="cal-nav-btn" onclick="calShift(7)">Later →</button>
-      </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="cal-nav-btn" onclick="calShift(-7)" style="flex:1;">← Earlier</button>
+      <button class="cal-nav-btn" onclick="calGoToday()" style="flex:1;">Today</button>
+      <button class="cal-nav-btn" onclick="calShift(7)" style="flex:1;">Later →</button>
     </div>
 
     <div id="calendarContainer"></div>
@@ -1963,17 +1957,6 @@ function renderCalendar() {
 
   html += '</div>';
   document.getElementById('calendarContainer').innerHTML = html;
-
-  // Heading
-  const headingEl = document.getElementById('calHeading');
-  if (headingEl) {
-    if (calOffset === 0) {
-      headingEl.textContent = 'Training Log';
-    } else {
-      const end = new Date(windowStart); end.setDate(windowStart.getDate() + DAYS - 1);
-      headingEl.textContent = `${fmtDateShort(windowStart)} – ${fmtDateShort(end)}`;
-    }
-  }
 
   // 3-week summary stats
   const summary = {};
