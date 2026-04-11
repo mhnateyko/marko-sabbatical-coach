@@ -374,12 +374,37 @@
     .program-badge { font-size: 10px; padding: 4px 9px; }
     .settings-btn { display: none; }
 
-    /* NAV */
-    .nav { padding: 0 6px; -webkit-overflow-scrolling: touch; }
-    .nav-tab { padding: 11px 12px; font-size: 12px; }
+    /* NAV — hide top nav, show bottom bar instead */
+    .nav { display: none; }
+    .settings-btn { display: flex !important; }
 
-    /* MAIN */
-    .main { padding: 10px; }
+    /* BOTTOM NAV */
+    .bottom-nav {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: var(--card); border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      box-shadow: 0 -1px 0 var(--border);
+    }
+    .bottom-nav-tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 8px 4px 6px; gap: 3px; cursor: pointer;
+      color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: 0.1px;
+      border-top: 2px solid transparent; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; min-height: 50px;
+    }
+    .bottom-nav-tab.active { color: var(--accent); border-top-color: var(--accent); }
+    .bottom-nav-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .bottom-nav-tab.active svg { stroke-width: 2.25; }
+
+    /* MAIN — extra bottom padding so content clears the fixed bottom nav */
+    .main { padding: 10px; padding-bottom: 78px; }
+
+    /* INPUT FONT SIZES — prevent iOS zoom on focus */
+    .form-input { font-size: 16px; }
+    .log-input { font-size: 16px; }
+    .card textarea { font-size: 16px; }
+    .activity-form-input { font-size: 16px; }
+    .activity-form-grid { grid-template-columns: 1fr; }
 
     /* GRIDS */
     .ai-layout { grid-template-columns: 1fr; height: auto; }
@@ -448,6 +473,32 @@
   .import-preview-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
   .import-preview-row:last-child { border-bottom: none; }
 
+  /* ACTIVITY LOG */
+  .activity-log-section { margin-top: 14px; }
+  .activity-log-header { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+  .activity-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 24px; }
+  .activity-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--card2); border: 1px solid var(--border); border-radius: 16px; padding: 5px 10px 5px 12px; font-size: 12px; }
+  .activity-chip-label { font-weight: 600; color: var(--text); }
+  .activity-chip-meta { color: var(--muted); }
+  .activity-chip-remove { color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; touch-action: manipulation; }
+  .activity-chip-remove:hover { color: var(--push); }
+  .add-activity-btn { background: none; border: 1.5px dashed var(--border); color: var(--accent); padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; transition: all 0.15s; touch-action: manipulation; }
+  .add-activity-btn:hover { background: rgba(14,158,118,0.04); border-color: var(--accent); }
+  .activity-form { background: var(--card2); border: 1px solid var(--border); border-radius: 9px; padding: 14px; margin-top: 10px; display: none; }
+  .activity-form.open { display: block; }
+  .activity-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .activity-form-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
+  .activity-form-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 9px 10px; color: var(--text); font-size: 14px; font-family: inherit; }
+  .activity-form-input:focus { outline: none; border-color: var(--accent); }
+  .activity-form-row { margin-bottom: 10px; }
+  .activity-log-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 10px 18px; cursor: pointer; font-weight: 700; font-size: 13px; transition: opacity 0.2s; touch-action: manipulation; }
+  .activity-log-btn:hover { opacity: 0.88; }
+  .activity-cancel-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 7px; padding: 10px 14px; cursor: pointer; font-size: 12px; margin-left: 8px; touch-action: manipulation; }
+  .cal-activity-badge { font-size: 9px; font-weight: 800; background: rgba(14,158,118,0.15); color: var(--accent); border-radius: 8px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
+
+  /* BOTTOM NAV (desktop: hidden) */
+  .bottom-nav { display: none; }
+
   /* SYNC STATUS */
   .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .sync-ok { background: rgba(26,122,80,0.1); color: var(--success); }
@@ -490,6 +541,30 @@
   <div class="nav-tab" onclick="switchTab('today')">Workout</div>
   <div class="nav-tab" onclick="switchTab('coach')">AI Coach</div>
   <div class="nav-tab" onclick="switchTab('settings')">Settings</div>
+</nav>
+
+<!-- iOS-native bottom tab bar (mobile only, shown via CSS) -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-tab active" id="bnt-today" onclick="switchTab('today')" role="button" aria-label="Workout">
+    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M12 3v3M5 12h14M9 21l3-9 3 9"/></svg>
+    <span>Workout</span>
+  </div>
+  <div class="bottom-nav-tab" id="bnt-calendar" onclick="switchTab('calendar')" role="button" aria-label="Calendar">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Calendar</span>
+  </div>
+  <div class="bottom-nav-tab" id="bnt-coach" onclick="switchTab('coach')" role="button" aria-label="Coach">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Coach</span>
+  </div>
+  <div class="bottom-nav-tab" id="bnt-history" onclick="switchTab('history')" role="button" aria-label="History">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>History</span>
+  </div>
+  <div class="bottom-nav-tab" id="bnt-plan" onclick="switchTab('plan')" role="button" aria-label="Plan">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Plan</span>
+  </div>
 </nav>
 
 <div class="main">
@@ -1502,10 +1577,14 @@ function saveState() {
 // ====================== TAB SWITCHING ======================
 function switchTab(tab, dateStr) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
+  // Top nav (desktop)
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   const tabIndex = ['history','plan','calendar','today','coach','settings'].indexOf(tab);
   document.querySelectorAll('.nav-tab')[tabIndex]?.classList.add('active');
+  // Bottom nav (mobile) — settings has no bottom tab, guard with ?.
+  document.querySelectorAll('.bottom-nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('bnt-' + tab)?.classList.add('active');
   state.currentTab = tab;
   if (tab === 'today') renderTracker(dateStr || todayKey());
   if (tab === 'calendar') renderCalendar();
@@ -1860,6 +1939,8 @@ function renderCalendar() {
     const noteText = wdata.note
       ? wdata.note.substring(0, 60) + (wdata.note.length > 60 ? '…' : '')
       : '';
+    const actCount = (wdata.activities || []).length;
+    const actBadge = actCount > 0 ? `<span class="cal-activity-badge">+${actCount}</span>` : '';
 
     // Type label — append a small "modified" tag if this day has been AI-overridden
     const typeLabel = sched.type.toUpperCase()
@@ -1875,7 +1956,7 @@ function renderCalendar() {
         <div class="cal-day-right">
           <div class="cal-day-main">
             <div class="cal-day-type-label" style="color:${typeColor[sched.type]}">${typeLabel}</div>
-            <div class="cal-day-workout-name">${sched.name}</div>
+            <div class="cal-day-workout-name">${sched.name}${actBadge}</div>
             ${noteText ? `<div class="cal-day-note">${noteText}</div>` : ''}
           </div>
           ${statusHtml}
@@ -2000,8 +2081,54 @@ function renderTracker(dk) {
         <button class="quick-btn" onclick="setTrackerNote('${dk}','Progressed to next OG level on ')">Progressed!</button>
         <button class="quick-btn" onclick="setTrackerNote('${dk}','Sore from yesterday — reduced intensity.')">Sore / recovery</button>
       </div>
-      <textarea style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;resize:vertical;min-height:80px;font-family:inherit;" id="trackerNote" onchange="saveTrackerNote('${dk}',this.value)" placeholder="How did it go? What progressed? Anything to note for next time...">${wdata.note||''}</textarea>
+      <textarea style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:16px;resize:vertical;min-height:80px;font-family:inherit;color:var(--text);" id="trackerNote" onchange="saveTrackerNote('${dk}',this.value)" placeholder="How did it go? What progressed? Anything to note for next time...">${wdata.note||''}</textarea>
     </div>
+
+    <!-- Additional activities for the day -->
+    <div class="card activity-log-section">
+      <div class="activity-log-header">Additional Activities</div>
+      <div class="activity-chips">
+        ${(wdata.activities||[]).length
+          ? (wdata.activities).map(a => `
+            <div class="activity-chip">
+              <span class="activity-chip-label">${a.label}</span>
+              ${a.duration ? `<span class="activity-chip-meta">${a.duration}</span>` : ''}
+              ${a.note ? `<span class="activity-chip-meta">· ${a.note}</span>` : ''}
+              <span class="activity-chip-remove" onclick="removeActivity('${dk}','${a.id}')" title="Remove">×</span>
+            </div>`).join('')
+          : `<span style="font-size:12px;color:var(--muted);">No extra activities logged today</span>`}
+      </div>
+      <button class="add-activity-btn" onclick="toggleActivityForm('${dk}')">+ Log Activity</button>
+      <div class="activity-form" id="actForm-${dk}">
+        <div class="activity-form-grid">
+          <div>
+            <label class="activity-form-label">Activity</label>
+            <input class="activity-form-input" id="actLabel-${dk}" type="text" placeholder="Gravel ride, Hike, Swim…" autocomplete="off">
+          </div>
+          <div>
+            <label class="activity-form-label">Type</label>
+            <select class="activity-form-input" id="actType-${dk}">
+              <option value="cardio">Cardio</option>
+              <option value="adventure">Adventure</option>
+              <option value="strength">Strength</option>
+              <option value="mobility">Mobility</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="activity-form-row">
+          <label class="activity-form-label">Duration</label>
+          <input class="activity-form-input" id="actDur-${dk}" type="text" placeholder="60 min, 2.5 hrs, 18 km…">
+        </div>
+        <div class="activity-form-row">
+          <label class="activity-form-label">Notes (optional)</label>
+          <input class="activity-form-input" id="actNote-${dk}" type="text" placeholder="Effort level, route, how it felt…">
+        </div>
+        <button class="activity-log-btn" onclick="logActivity('${dk}')">Log</button>
+        <button class="activity-cancel-btn" onclick="toggleActivityForm('${dk}')">Cancel</button>
+      </div>
+    </div>
+
     <button class="tracker-finish-btn" onclick="finishWorkout('${dk}')" ${wdata.completed ? 'style="background:var(--success);color:white"' : ''}>
       ${wdata.completed ? '✅ Workout Complete! (Click to undo)' : '✓ Mark Workout Complete'}
     </button>
@@ -2029,7 +2156,8 @@ function renderSetRow(exId, i, s, dk) {
 }
 
 function getWdata(dk) {
-  if (!state.workouts[dk]) state.workouts[dk] = { sets:{}, note:'', completed:false };
+  if (!state.workouts[dk]) state.workouts[dk] = { sets:{}, note:'', completed:false, substitution:'', activities:[] };
+  if (!state.workouts[dk].activities) state.workouts[dk].activities = []; // backward compat
   return state.workouts[dk];
 }
 
@@ -2094,6 +2222,33 @@ function setTrackerNote(dk, text) {
   saveTrackerNote(dk, text);
 }
 
+// ====================== ACTIVITY LOG ======================
+function toggleActivityForm(dk) {
+  document.getElementById(`actForm-${dk}`)?.classList.toggle('open');
+}
+
+function logActivity(dk) {
+  const label = (document.getElementById(`actLabel-${dk}`)?.value || '').trim();
+  if (!label) { showToast('Enter an activity name first', 2000); return; }
+  getWdata(dk).activities.push({
+    id: Date.now().toString(36),
+    label,
+    type: document.getElementById(`actType-${dk}`)?.value || 'other',
+    duration: (document.getElementById(`actDur-${dk}`)?.value || '').trim(),
+    note: (document.getElementById(`actNote-${dk}`)?.value || '').trim(),
+    loggedAt: new Date().toISOString()
+  });
+  saveState();
+  renderTracker(dk);
+}
+
+function removeActivity(dk, actId) {
+  const w = getWdata(dk);
+  w.activities = w.activities.filter(a => a.id !== actId);
+  saveState();
+  renderTracker(dk);
+}
+
 function finishWorkout(dk) {
   const w = getWdata(dk);
   if (w.completed) {
@@ -2154,6 +2309,34 @@ OG RULES YOU MUST APPLY:
 
 You MUST call propose_schedule_changes. No text response — tool use only.`;
 
+function buildRecentTrainingLog(days = 14) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const lines = [];
+  for (let i = days; i >= 1; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const dk = dateKey(d);
+    const wdata = state.workouts[dk] || {};
+    const sched = getScheduleForDate(d);
+    const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    let summary = 'rest / not logged';
+    if (wdata.completed || Object.keys(wdata.sets || {}).length > 0) {
+      const doneSets = [];
+      for (const ex of (sched.exercises || [])) {
+        const sets = (wdata.sets || {})[ex.id] || [];
+        const done = sets.filter(s => s.done);
+        if (done.length) doneSets.push(`${ex.name} ×${done.length}`);
+      }
+      summary = doneSets.length ? doneSets.join(', ') : (wdata.substitution || sched.name + ' (completed)');
+    }
+    const acts = (wdata.activities || []);
+    const actStr = acts.length ? ' + ' + acts.map(a => `${a.label}(${a.duration||'?'})`).join(', ') : '';
+    const noteStr = wdata.note ? ` — "${wdata.note.substring(0,80)}"` : '';
+    const mark = wdata.completed ? '✓' : ' ';
+    lines.push(`  [${mark}] ${dayLabel}: ${sched.name} — ${summary}${actStr}${noteStr}`);
+  }
+  return lines.join('\n');
+}
+
 function buildPostWorkoutContext(dk) {
   const d = new Date(dk + 'T12:00:00');
   const sched = getScheduleForDate(d);
@@ -2198,6 +2381,10 @@ SETS LOGGED:
 ${setLines.length ? setLines.join('\n') : '  None logged (rest/adventure day)'}
 
 SESSION NOTES: "${wdata.note || 'None'}"
+${(wdata.activities||[]).length ? '\nADDITIONAL ACTIVITIES SAME DAY:\n' + (wdata.activities).map(a => `  • ${a.label} (${a.type}) — ${a.duration||'?'}${a.note?' — '+a.note:''}`).join('\n') : ''}
+
+RECENT TRAINING (last 14 days):
+${buildRecentTrainingLog(14)}
 
 UPCOMING SCHEDULE (next 14 days):
 ${upcoming.join('\n')}`;
@@ -2616,7 +2803,8 @@ function normalizeGarminType(type) {
 }
 
 // ====================== AI COACH ======================
-const SYSTEM_PROMPT = `You are Coach Claude — Marko's personal AI fitness coach. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
+function buildSystemPrompt() {
+  return `You are Coach Claude — Marko's personal AI fitness coach. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
 
 ═══ COACHING PROTOCOL — FOLLOW THIS EVERY TIME ═══
 
@@ -2791,7 +2979,24 @@ Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'
 - When he reports doing something different, adapt and affirm — adventures COUNT as training
 - When prescribing work, always specify: sets × reps, rest periods, progression standard
 - Format: **bold** for exercise names, use line breaks for clarity
-- Today's date: ${new Date().toLocaleDateString()}`;
+- Today's date: ${new Date().toLocaleDateString()}
+
+═══ MULTI-ACTIVITY DAYS ═══
+Marko often stacks multiple activities on the same day — e.g. a strength session in the morning and a gravel ride in the afternoon. The app tracks both via an "Additional Activities" log attached to each day.
+
+When you see activities listed alongside a scheduled workout, factor them into recovery:
+• Light cardio (easy cycling/run ≤1h, Zone 2) on top of a strength session = acceptable; no schedule change needed
+• Long effort (2h+ hike/ride or hard run) on a heavy CNS day = treat as combined load; next day should be rest or Zone 2 only
+• Back-to-back heavy CNS days (Push + Pull + big load activity) = flag it and suggest a buffer
+
+You may actively suggest combinations: "Do your Pull session + the bike ride this afternoon" when loading permits. Stacking light aerobic on strength days is encouraged — it builds the "boundless energy" base.
+
+OG RULE: never stack two heavy CNS sessions (Push/Pull/Legs) back-to-back without a Zone 2 or Rest buffer.
+
+═══ RECENT TRAINING LOG (last 14 days) ═══
+${buildRecentTrainingLog(14)}
+`;
+}
 
 const AI_TOOLS = [
   {
@@ -3002,7 +3207,7 @@ async function sendMessage() {
         body: JSON.stringify({
           model: state.settings.model || 'claude-sonnet-4-6',
           max_tokens: 1500,
-          system: SYSTEM_PROMPT,
+          system: buildSystemPrompt(),
           tools: AI_TOOLS,
           messages
         })
@@ -3261,6 +3466,24 @@ async function pullFromCloud() {
   showToast('Synced from cloud', 2000);
 }
 
+function initZoomSnapBack() {
+  let pinching = false;
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length >= 2) pinching = true;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (pinching && e.touches.length === 0) {
+      pinching = false;
+      const vp = document.querySelector('meta[name=viewport]');
+      // Temporarily lock to scale=1 (snaps iOS back), then re-allow zoom
+      vp.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0';
+      setTimeout(() => {
+        vp.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+      }, 300);
+    }
+  }, { passive: true });
+}
+
 function initPullToRefresh() {
   // Create indicator element
   const ind = document.createElement('div');
@@ -3364,6 +3587,7 @@ async function init() {
   }
 
   initPullToRefresh();
+  initZoomSnapBack();
 }
 
 window.addEventListener('load', init);
