@@ -366,6 +366,29 @@
   .tracker-finish-btn:hover { opacity: 0.88; }
   .bottom-nav { display: none; } /* hidden on desktop; shown by mobile media query below */
 
+  /* REST TIMER */
+  #restTimerBar {
+    position: fixed; bottom: 72px; left: 50%;
+    transform: translateX(-50%) translateY(120px); /* hidden off-screen below */
+    z-index: 9997; background: #1c1e24; color: #fff;
+    border-radius: 18px; padding: 13px 22px;
+    display: flex; align-items: center; gap: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    cursor: pointer; touch-action: manipulation;
+    transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1);
+    white-space: nowrap; pointer-events: auto;
+  }
+  #restTimerBar.rest-visible { transform: translateX(-50%) translateY(0); }
+  #restTimerBar.rest-urgent { background: var(--push); }
+  #restTimerCount { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -1px; line-height: 1; }
+
+  /* HOLD TIMER */
+  .hold-timer-row { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
+  .hold-timer-btn { background: var(--card2); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--accent); touch-action: manipulation; transition: all 0.15s; min-width: 110px; text-align: center; }
+  .hold-timer-btn.timing { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .hold-timer-display { font-size: 22px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; min-width: 56px; display: none; }
+  .hold-timer-display.active { display: block; }
+
   @media (max-width: 768px) {
     /* HEADER */
     .header { padding: 10px 14px; }
@@ -1454,6 +1477,17 @@ const TRAINING_SCHEDULE = [
       { id:'rest_walk', name:'Easy Walk / Light Stretch',  ogType:'prehab',    target:'20–40 min',   defaultSets:1, advanceWhen:'N/A',                                  note:'Light movement promotes blood flow without stressing the system. Walk, not hike.' },
       { id:'mob_full',  name:'Full Mobility Session',      ogType:'prehab',    target:'15–20 min',   defaultSets:1, advanceWhen:'N/A — build the habit',                note:'Hip openers, spinal rotation, shoulder circles, calf stretches. Yoga mat time. Especially after hard leg days.' }
     ]
+  },
+  { schedIdx: 7, name: 'Threshold Cardio', type: 'cardio', emoji: '🔥',
+    ogNote: 'OG: Zone 4 (HR 160–175) once per week raises the lactate threshold — the ceiling of sustainable intensity. Critical for all-day adventure energy.',
+    exercises: [
+      { id:'thresh_warmup',   name:'Warm-Up',                        ogType:'prehab',    target:'5–10 min easy',         defaultSets:1, advanceWhen:'N/A',
+        note:'Easy jog or bike at conversational pace, HR <130. Dynamic leg swings, arm circles. Tendons need 5+ min to warm before hard effort.' },
+      { id:'thresh_main',     name:'Threshold Intervals or Tempo',   ogType:'strength',  target:'20–35 min · HR 160–175', defaultSets:4, advanceWhen:'When 30+ min continuous tempo feels controlled (HR ≤175, can still think clearly) — extend duration 5 min per week',
+        note:'Option A (Intervals): 4–6 × 4 min hard at HR 160–175, 2 min easy jog recovery between. Option B (Tempo run): 20–35 min continuous at "comfortably hard" (~8:30–8:50/mile). OG principle: threshold raises the aerobic ceiling. 1× per week is enough — more frequency brings diminishing returns and slows strength recovery.' },
+      { id:'thresh_cooldown', name:'Cool-Down + Stretch',            ogType:'prehab',    target:'5–10 min',              defaultSets:1, advanceWhen:'N/A',
+        note:'Easy walk/jog until HR drops below 130. Calf raises × 20, hip flexor stretch 60s/side, foam roll quads. Threshold days create significant quad/calf stress — cool-down matters.' }
+    ]
   }
 ];
 
@@ -1927,9 +1961,9 @@ function renderCalendar() {
       statusHtml = `<div class="cal-day-partial">${doneEx}/${totalEx}<br>done</div>`;
     }
 
-    const noteText = wdata.note
-      ? wdata.note.substring(0, 60) + (wdata.note.length > 60 ? '…' : '')
-      : '';
+    // Prefer substitution (what was actually done) over note text on calendar
+    const rawNoteText = wdata.substitution || wdata.note || '';
+    const noteText = rawNoteText.substring(0, 60) + (rawNoteText.length > 60 ? '…' : '');
     const actCount = (wdata.activities || []).length;
     const actBadge = actCount > 0 ? `<span class="cal-activity-badge">+${actCount}</span>` : '';
 
@@ -2033,6 +2067,11 @@ function renderTracker(dk) {
             <div class="tracker-ex-note">${ex.note}</div>
             ${ex.advanceWhen !== 'N/A' && ex.advanceWhen ? `<div style="font-size:10px;margin-top:4px;color:var(--accent);background:rgba(0,212,170,0.08);padding:3px 6px;border-radius:4px;display:inline-block">⬆ Advance when: ${ex.advanceWhen}</div>` : ''}
             ${subBadge}
+            ${ex.ogType === 'skill' && /\ds/.test(ex.target) ? `
+            <div class="hold-timer-row">
+              <button class="hold-timer-btn" id="holdBtn-${ex.id}" onclick="toggleHoldTimer('${ex.id}','${dk}')">▶ Start Hold</button>
+              <div class="hold-timer-display" id="holdDisp-${ex.id}">0s</div>
+            </div>` : ''}
           </div>
         </div>
         <div class="set-table">
@@ -2055,6 +2094,14 @@ function renderTracker(dk) {
   html += `
     <div class="card" style="margin-top:16px;">
       <div class="card-title">Session Notes</div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);display:block;margin-bottom:5px;">What did you actually do? <span style="font-weight:400;text-transform:none;">(leave blank if you followed the plan)</span></label>
+        <input type="text" class="form-input" id="trackerSub"
+          style="font-size:16px;"
+          value="${wdata.substitution||''}"
+          onchange="saveTrackerSub('${dk}',this.value)"
+          placeholder="e.g. 2hr gravel ride, 8-mile hike, rest day…">
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
         <button class="quick-btn" onclick="setTrackerNote('${dk}','Felt great — full energy and strength. OG progression on track.')">Felt great</button>
         <button class="quick-btn" onclick="setTrackerNote('${dk}','Low energy today — did what I could. Maybe reduce volume next session.')">Low energy</button>
@@ -2158,15 +2205,18 @@ function toggleSetDone(exId, setIdx, dk) {
   const ex = sched.exercises.find(e=>e.id===exId);
   if (!w.sets[exId]) w.sets[exId] = initSets(ex ? ex.defaultSets : 3);
   if (!w.sets[exId][setIdx]) w.sets[exId][setIdx] = {reps:'',weight:'',rpe:'',done:false};
-  w.sets[exId][setIdx].done = !w.sets[exId][setIdx].done;
+  const nowDone = !w.sets[exId][setIdx].done;
+  w.sets[exId][setIdx].done = nowDone;
   saveState();
   // Update button appearance
   const btn = document.getElementById(`setrow-${exId}-${setIdx}`)?.querySelector('.set-done-btn');
-  if (btn) btn.classList.toggle('done', w.sets[exId][setIdx].done);
+  if (btn) btn.classList.toggle('done', nowDone);
   // Update exercise block border
   const exBlock = document.getElementById(`exblock-${exId}`);
   if (exBlock) exBlock.style.borderColor = w.sets[exId].some(s=>s.done) ? 'rgba(34,197,94,0.4)' : '';
   refreshProgress(dk);
+  // Start 2-min rest timer when a set is completed (not un-completed)
+  if (nowDone) startRestTimer(120);
 }
 
 function addSet(exId, dk) {
@@ -2194,6 +2244,11 @@ function refreshProgress(dk) {
 
 function saveTrackerNote(dk, val) {
   getWdata(dk).note = val;
+  saveState();
+}
+
+function saveTrackerSub(dk, val) {
+  getWdata(dk).substitution = val;
   saveState();
 }
 
@@ -2266,7 +2321,7 @@ const POST_WORKOUT_TOOL = {
           type: 'object',
           properties: {
             date:     { type: 'string',  description: 'YYYY-MM-DD' },
-            schedIdx: { type: 'integer', description: '0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio/Adventure, 6=Rest+Recover' },
+            schedIdx: { type: 'integer', description: '0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio/Adventure, 6=Rest+Recover, 7=Threshold Cardio' },
             reason:   { type: 'string',  description: 'One sentence — why this specific swap.' }
           },
           required: ['date','schedIdx','reason']
@@ -2298,21 +2353,27 @@ function buildRecentTrainingLog(days = 14) {
     const wdata = state.workouts[dk] || {};
     const sched = getScheduleForDate(d);
     const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    let summary = 'rest / not logged';
-    if (wdata.completed || Object.keys(wdata.sets || {}).length > 0) {
+    // When the user logged a substitution, that IS the primary activity — show it first
+    const what = wdata.substitution
+      ? `${wdata.substitution} [was: ${sched.name}]`
+      : sched.name;
+    let summary = 'not logged';
+    if (wdata.substitution && !wdata.completed && !Object.keys(wdata.sets || {}).length) {
+      summary = 'substituted (no sets logged)';
+    } else if (wdata.completed || Object.keys(wdata.sets || {}).length > 0) {
       const doneSets = [];
       for (const ex of (sched.exercises || [])) {
         const sets = (wdata.sets || {})[ex.id] || [];
         const done = sets.filter(s => s.done);
         if (done.length) doneSets.push(`${ex.name} ×${done.length}`);
       }
-      summary = doneSets.length ? doneSets.join(', ') : (wdata.substitution || sched.name + ' (completed)');
+      summary = doneSets.length ? doneSets.join(', ') : (wdata.substitution ? 'substituted' : sched.name + ' (completed)');
     }
     const acts = (wdata.activities || []);
     const actStr = acts.length ? ' + ' + acts.map(a => `${a.label}(${a.duration||'?'})`).join(', ') : '';
     const noteStr = wdata.note ? ` — "${wdata.note.substring(0,80)}"` : '';
     const mark = wdata.completed ? '✓' : ' ';
-    lines.push(`  [${mark}] ${dayLabel}: ${sched.name} — ${summary}${actStr}${noteStr}`);
+    lines.push(`  [${mark}] ${dayLabel}: ${what} — ${summary}${actStr}${noteStr}`);
   }
   return lines.join('\n');
 }
@@ -2809,9 +2870,10 @@ Before responding to ANY message, run this mental checklist:
 
 4. OPTIMIZE FOR GOALS every time:
    - Primary: OG progression — advance when 3×8 clean, hold when form breaks
-   - Secondary: Aerobic base (Zone 2 3x/week minimum)
+   - Secondary: Aerobic base (Zone 2 3x/week minimum) + Threshold 1×/week
    - Tertiary: Recovery and adventure readiness
    - Never sacrifice progression quality for volume
+   - PUSH FREQUENCY: 5–6 training days/week is fine when volume is managed. Don't let idle days accumulate — if recovery signals are positive, schedule the next session.
 
 5. RESPONSE FORMAT:
    - Lead with any tool actions taken (they appear above as action cards)
@@ -2829,8 +2891,15 @@ Running: 3–5 mi base ~9:10/mile, threshold ~8:36/mile; also cycles and hikes r
 Exceptional leg strength — well-positioned for hiking, pistol squats, adventure activities
 
 ═══ WEEKLY TEMPLATE ═══
-Mon: Upper Push (schedIdx 0) | Tue: Zone 2 Cardio (1) | Wed: Upper Pull (2)
+Mon: Upper Push (0) | Tue: Zone 2 Cardio (1) | Wed: Upper Pull (2)
 Thu: Adventure/Active (3) | Fri: Lower Body (4) | Sat: Long Cardio (5) | Sun: Rest (6)
+Threshold Cardio (7) — schedule 1×/week in place of Zone 2 or Adventure slot when ready
+
+STACKING STRENGTH + CARDIO:
+• Strength AM + easy cardio PM = standard practice, not a special exception. Endorse it proactively.
+• Strength in the morning before a Zone 2 ride/run = ideal (CNS fresh for lifts, aerobic work flushes lactate)
+• Threshold (schedIdx 7) should NOT be stacked with heavy CNS strength on the same day
+• 5–6 active days per week is the TARGET, not the ceiling — schedule aggressively within OG recovery rules
 
 ═══ OVERCOMING GRAVITY FRAMEWORK ═══
 
@@ -2948,8 +3017,11 @@ Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'
 
 8. ENERGY SYSTEM WORK (for "boundless energy"):
    • Easy aerobic (Zone 2, HR 130–150): 3×/week minimum — builds mitochondrial density
-   • Threshold work (Zone 4, HR 160–175): 1×/week — raises lactate threshold
+   • Threshold work (Zone 4, HR 160–175): schedIdx 7 — schedule 1×/week to raise lactate threshold. Non-negotiable once base is established.
+   • Threshold should NOT be stacked with heavy CNS strength on the same day — it counts as high CNS load itself
+   • Strength AM + easy cardio PM on the same day = standard practice; endorse it proactively when loading permits
    • Adventure activities count as training — hiking = legs+cardio, cycling = cardio, swimming = full body
+   • 5–6 active days/week is the TARGET — if recovery signals are positive, schedule the next session rather than defaulting to rest
 
 9. TENDON HEALTH (OG emphasis): Tendons adapt 3–10× slower than muscles. Progress conservatively. If joints feel achy, drop volume 30% and add more prehab. Shoulder health (face pulls, scapular pulls) is non-negotiable every session.
 
@@ -2959,6 +3031,8 @@ Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'
 - When he reports doing something different, adapt and affirm — adventures COUNT as training
 - When prescribing work, always specify: sets × reps, rest periods, progression standard
 - Format: **bold** for exercise names, use line breaks for clarity
+- PUSH FREQUENCY: 5–6 training days/week is fine when volume is managed. Don't let idle days accumulate — if recovery signals are positive, schedule the next session
+- STACKING: Strength AM + easy cardio PM is standard practice, not an exception. Actively suggest it when it fits the week
 - Today's date: ${new Date().toLocaleDateString()}
 
 ═══ MULTI-ACTIVITY DAYS ═══
@@ -2986,7 +3060,7 @@ const AI_TOOLS = [
       type: 'object',
       properties: {
         date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-        schedIdx: { type: 'integer', description: 'Schedule index: 0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio, 6=Rest' },
+        schedIdx: { type: 'integer', description: 'Schedule index: 0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio, 6=Rest, 7=Threshold Cardio' },
         note: { type: 'string', description: 'Why this day was changed (optional)' }
       },
       required: ['date', 'schedIdx']
@@ -3019,7 +3093,7 @@ const AI_TOOLS = [
             type: 'object',
             properties: {
               date: { type: 'string', description: 'YYYY-MM-DD' },
-              schedIdx: { type: 'integer', description: '0=Push,1=Cardio,2=Pull,3=Adventure,4=Legs,5=LongCardio,6=Rest' },
+              schedIdx: { type: 'integer', description: '0=Push,1=Cardio,2=Pull,3=Adventure,4=Legs,5=LongCardio,6=Rest,7=ThresholdCardio' },
               note: { type: 'string' }
             },
             required: ['date', 'schedIdx']
@@ -3443,6 +3517,78 @@ async function pullFromCloud() {
   showToast('Synced from cloud', 2000);
 }
 
+// ====================== REST TIMER ======================
+let _restInterval = null;
+let _restSecs = 0;
+
+function startRestTimer(secs = 120) {
+  clearInterval(_restInterval);
+  _restSecs = secs;
+  const bar = document.getElementById('restTimerBar');
+  if (!bar) return;
+  bar.classList.remove('rest-urgent');
+  bar.classList.add('rest-visible');
+  _tickRestTimer();
+  _restInterval = setInterval(() => {
+    _restSecs--;
+    _tickRestTimer();
+    if (_restSecs <= 0) {
+      clearInterval(_restInterval);
+      if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+      setTimeout(() => bar?.classList.remove('rest-visible', 'rest-urgent'), 1800);
+    }
+  }, 1000);
+}
+
+function _tickRestTimer() {
+  const el = document.getElementById('restTimerCount');
+  if (!el) return;
+  const m = Math.floor(Math.max(0, _restSecs) / 60);
+  const s = Math.max(0, _restSecs) % 60;
+  el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  document.getElementById('restTimerBar')?.classList.toggle('rest-urgent', _restSecs <= 15 && _restSecs > 0);
+}
+
+function dismissRestTimer() {
+  clearInterval(_restInterval);
+  document.getElementById('restTimerBar')?.classList.remove('rest-visible', 'rest-urgent');
+}
+
+// ====================== HOLD TIMER ======================
+const _holdTimers = {};
+
+function toggleHoldTimer(exId, dk) {
+  const key = exId;
+  const btn  = document.getElementById(`holdBtn-${exId}`);
+  const disp = document.getElementById(`holdDisp-${exId}`);
+
+  if (_holdTimers[key]) {
+    // Stop — write elapsed seconds to first unfilled set's reps field
+    clearInterval(_holdTimers[key].interval);
+    const secs = _holdTimers[key].secs;
+    delete _holdTimers[key];
+    if (btn)  { btn.textContent = '▶ Start Hold'; btn.classList.remove('timing'); }
+    if (disp) { disp.classList.remove('active'); disp.textContent = '0s'; }
+    // Find first set without reps logged; fall back to last set
+    const w = getWdata(dk);
+    const sets = w.sets[exId] || [];
+    let idx = sets.findIndex(s => !s.reps);
+    if (idx === -1) idx = Math.max(0, sets.length - 1);
+    updateSet(exId, idx, 'reps', `${secs}s`, dk);
+    const inp = document.querySelector(`#setrow-${exId}-${idx} input`);
+    if (inp) { inp.value = `${secs}s`; inp.classList.add('filled'); }
+  } else {
+    // Start
+    _holdTimers[key] = { secs: 0, interval: null };
+    if (btn)  { btn.textContent = '⏹ Stop'; btn.classList.add('timing'); }
+    if (disp) { disp.classList.add('active'); }
+    _holdTimers[key].interval = setInterval(() => {
+      _holdTimers[key].secs++;
+      if (disp) disp.textContent = `${_holdTimers[key].secs}s`;
+    }, 1000);
+  }
+}
+
 function initZoomSnapBack() {
   let pinching = false;
   document.addEventListener('touchstart', e => {
@@ -3569,5 +3715,14 @@ async function init() {
 
 window.addEventListener('load', init);
 </script>
+
+<!-- Rest timer overlay -->
+<div id="restTimerBar" onclick="dismissRestTimer()" role="button" aria-label="Rest timer — tap to dismiss">
+  <div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.45);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Rest</div>
+    <div id="restTimerCount">2:00</div>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Tap to<br>skip</div>
+</div>
 </body>
 </html>
