@@ -343,6 +343,7 @@
   .type-accessory { background: rgba(125,132,148,0.1); color: var(--muted); }
   .type-prehab { background: rgba(26,122,80,0.1); color: var(--success); }
   .type-core { background: rgba(37,99,235,0.1); color: var(--accent2); }
+  .type-warmup { background: rgba(245,158,11,0.12); color: #f59e0b; }
   .tracker-ex-name { font-size: 14px; font-weight: 700; }
   .tracker-ex-target { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 2px; }
   .tracker-ex-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
@@ -854,38 +855,38 @@
       <div class="week-grid">
         <div class="day-card">
           <div class="day-name">Mon</div>
-          <div class="day-type push">Upper Push</div>
-          <div class="day-detail">Push-ups, Ring Dips, Pike OHP, Core</div>
+          <div class="day-type push">Upper Body 1</div>
+          <div class="day-detail">L-Sit · V-Push · H-Pull · H-Push · Curls · Prehab</div>
         </div>
         <div class="day-card">
           <div class="day-name">Tue</div>
-          <div class="day-type cardio">Cardio</div>
-          <div class="day-detail">Easy run 3–5 mi or bike or swim</div>
+          <div class="day-type cardio">Threshold</div>
+          <div class="day-detail">Zone 4 intervals or tempo · 20–35 min</div>
         </div>
         <div class="day-card">
           <div class="day-name">Wed</div>
-          <div class="day-type pull">Upper Pull</div>
-          <div class="day-detail">Pull-ups, Ring Rows, Face Pulls, Curls</div>
+          <div class="day-type pull">Upper Body 2</div>
+          <div class="day-detail">Handstand · V-Pull · Push-up Volume · Prehab</div>
         </div>
         <div class="day-card">
           <div class="day-name">Thu</div>
-          <div class="day-type flex">Adventure</div>
-          <div class="day-detail">Hike, explore, yoga, active recovery</div>
+          <div class="day-type cardio">Easy Base</div>
+          <div class="day-detail">3–4 mi easy run · HR 130–150 · or Z2 swap</div>
         </div>
         <div class="day-card">
           <div class="day-name">Fri</div>
           <div class="day-type legs">Lower Body</div>
-          <div class="day-detail">Split squats, Nordic curls, Calf raises</div>
+          <div class="day-detail">Pistol · BSS · Nordic · Jump Squat · Calves</div>
         </div>
         <div class="day-card">
           <div class="day-name">Sat</div>
-          <div class="day-type cardio">Cardio+</div>
-          <div class="day-detail">Longer effort or adventure activity</div>
+          <div class="day-type cardio">Long Run / Adventure</div>
+          <div class="day-detail">60–90 min Z2 or 2–5h hike / bike / climb</div>
         </div>
         <div class="day-card">
           <div class="day-name">Sun</div>
           <div class="day-type rest">Rest</div>
-          <div class="day-detail">Walk, stretch, yoga</div>
+          <div class="day-detail">Walk, stretch, mobility</div>
         </div>
       </div>
     </div>
@@ -1428,11 +1429,13 @@ const TRAINING_SCHEDULE = [
       { id:'face_pull',name:'Band Face Pulls + Scap Push-ups', ogType:'prehab', target:'3 × 15–20', defaultSets:3, advanceWhen:'N/A — do every session forever',       note:'Face pulls: thumb to ears. Scap push-ups: protract/retract. Non-negotiable shoulder health.' }
     ]
   },
-  { schedIdx: 1, name: 'Zone 2 Cardio', type: 'cardio', emoji: '🏃',
+  { schedIdx: 1, name: 'Easy Base Run', type: 'cardio', emoji: '🏃',
     ogNote: 'OG Aerobic Base: Zone 2 (HR 130–150) builds mitochondria — the engine for boundless energy. Do 3×/week minimum.',
     exercises: [
-      { id:'z2_run',   name:'Easy Run / Hike',            ogType:'skill',     target:'30–50 min · HR 130–150', defaultSets:1, advanceWhen:'Build to 60 min comfortably', note:'Conversational pace ~9:30–10:30/mile. Never harder than easy conversation.' },
-      { id:'z2_alt',   name:'Alt: Bike / Swim / Paddle',  ogType:'accessory', target:'Any duration',           defaultSets:1, advanceWhen:'N/A — just move',             note:'Any Zone 2 aerobic modality counts. Mountain biking, kayaking, snorkeling — it all works.' }
+      { id:'z2_warmup', name:'Dynamic Warm-Up',            ogType:'warmup',    target:'5 min',                  defaultSets:1, advanceWhen:'N/A', note:'Leg swings 10/side, ankle circles, lunges with rotation 5/side, calf raises 15, easy walking 2 min. Tendons need primed time before any running.' },
+      { id:'z2_run',   name:'Easy Base Run',               ogType:'strength',  target:'3–4 mi · HR 130–150',    defaultSets:1, advanceWhen:'Build to 5 mi comfortably at sub-9:30/mile while still Zone 2', note:'Conversational pace ~9:30–10:30/mile, RPE 4–5. You should be able to hold a full sentence. Builds mitochondrial density — the foundation of all-day energy. 3×/week minimum across base/threshold/long.' },
+      { id:'z2_alt',   name:'Adventure Swap',              ogType:'accessory', target:'45–90 min easy effort',  defaultSets:1, advanceWhen:'N/A — context-dependent', note:'Acceptable swaps for the base run: easy hike (<2h, rolling), Zone 2 bike/gravel ride, swim, paddle, kayak. Keep effort conversational. Log the swap in "What did you actually do?" so the AI knows.' },
+      { id:'z2_cool',  name:'Cool-Down + Mobility',        ogType:'prehab',    target:'5 min',                  defaultSets:1, advanceWhen:'N/A', note:'Walk until HR <120. Calf stretch 30s/side, hip flexor stretch 30s/side, hamstring stretch 30s/side. Running tendons love the cool-down.' }
     ]
   },
   { schedIdx: 2, name: 'Upper Pull', type: 'pull', emoji: '🔄',
@@ -1456,6 +1459,7 @@ const TRAINING_SCHEDULE = [
   { schedIdx: 4, name: 'Lower Body', type: 'legs', emoji: '🦵',
     ogNote: 'OG Order: Pistol Skill → BSS Strength → Nordic Strength → Power → Accessory → Prehab. If you hiked today, reduce volume by 50%.',
     exercises: [
+      { id:'leg_warmup', name:'Warm-Up / Activation',      ogType:'warmup',    target:'5 min',       defaultSets:1, advanceWhen:'N/A',                                    note:'Bodyweight squats × 15, walking lunges × 8/leg, glute bridges × 12, leg swings × 10/side, ankle circles × 10. Hips + ankles primed before loading. Skip if just finished cardio.' },
       { id:'pistol',   name:'Pistol Squat Progression',   ogType:'skill',     target:'3 × 3–5/leg', defaultSets:3, advanceWhen:'3×5 → reduce box height or wall assist', note:'Wk1-4: Sit to box, stand 1-leg. Wk5-8: Wall-assisted partial. Wk9+: Full pistol. Fresh legs, do first.' },
       { id:'bss',      name:'Bulgarian Split Squat',       ogType:'strength',  target:'4 × 5–8/leg', defaultSets:4, advanceWhen:'3×8/leg BW → add backpack weight',      note:'Rear foot on chair/bed, front foot forward. OG: best single-leg quad/glute movement. 2 min rest.' },
       { id:'nordic',   name:'Nordic Hamstring Curl',       ogType:'strength',  target:'3 × 3–6 negs', defaultSets:3, advanceWhen:'3×6 negs → partial concentric',       note:'Anchor feet, lower 4–5s, catch with hands. Wk5+: push up partway. Wk9+: full curl. 2 min rest.' },
@@ -1464,11 +1468,13 @@ const TRAINING_SCHEDULE = [
       { id:'hip_mob',  name:'Hip 90/90 + SL RDL',         ogType:'prehab',    target:'2 × 60s + 3×8 SL-RDL', defaultSets:2, advanceWhen:'N/A — hip health',            note:'90/90 hip rotation + single-leg RDL hinge. OG: hip mobility prevents most lower body issues.' }
     ]
   },
-  { schedIdx: 5, name: 'Long Cardio / Adventure', type: 'cardio', emoji: '🚴',
+  { schedIdx: 5, name: 'Long Run / Adventure', type: 'cardio', emoji: '🚴',
     ogNote: 'OG: Longer aerobic session builds cardiac output. One big effort/week is the key to all-day energy. Log your adventure activities — they count.',
     exercises: [
-      { id:'long_card', name:'Long Cardio Effort',         ogType:'skill',     target:'45–90 min',   defaultSets:1, advanceWhen:'Build to 90 min easy',                 note:'Bike, longer run, hike with elevation, swim. This is your big aerobic day. Explore somewhere new.' },
-      { id:'adv2',      name:'OR: Full-Day Adventure',     ogType:'accessory', target:'As long as it takes', defaultSets:1, advanceWhen:'N/A',                          note:'Surf, kayak, ski, rock climb, mountain bike all day. Log it. Counts as combined cardio + leg day.' }
+      { id:'long_warmup', name:'Warm-Up',                  ogType:'warmup',    target:'5–10 min',    defaultSets:1, advanceWhen:'N/A', note:'Walking lunges, leg swings, hip circles, 2 min easy jog. Long efforts need fully primed tendons. Don\'t skip — long-run injuries usually start with cold tissue.' },
+      { id:'long_card', name:'Long Run',                    ogType:'strength',  target:'60–90 min · HR 135–155', defaultSets:1, advanceWhen:'Build to 90 min comfortable → add intensity blocks',                 note:'Mostly Zone 2 with the back third optionally lifting into mid-Zone 3 (HR 150–160). RPE 4–6. Builds the aerobic ceiling and tendon resilience. If energy is low, run shorter at slower pace — never grind a long run.' },
+      { id:'long_adv',  name:'Adventure Swap (preferred)',  ogType:'accessory', target:'2–5 hrs',     defaultSets:1, advanceWhen:'N/A — context-dependent',                          note:'Acceptable swaps: long hike (3h+, elevation), gravel/mountain bike, surf session, climbing day, big paddle. ALL count as the long aerobic day — often better stimulus than a road run. Log distance + elevation + effort.' },
+      { id:'long_cool', name:'Cool-Down + Mobility',        ogType:'prehab',    target:'10 min',      defaultSets:1, advanceWhen:'N/A', note:'Walk to HR <120. Calf, quad, hip flexor, glute stretches. Foam roll if available. Eat soon after — long efforts deplete glycogen.' }
     ]
   },
   { schedIdx: 6, name: 'Rest + Recover', type: 'rest', emoji: '😴',
@@ -1487,6 +1493,46 @@ const TRAINING_SCHEDULE = [
         note:'Option A (Intervals): 4–6 × 4 min hard at HR 160–175, 2 min easy jog recovery between. Option B (Tempo run): 20–35 min continuous at "comfortably hard" (~8:30–8:50/mile). OG principle: threshold raises the aerobic ceiling. 1× per week is enough — more frequency brings diminishing returns and slows strength recovery.' },
       { id:'thresh_cooldown', name:'Cool-Down + Stretch',            ogType:'prehab',    target:'5–10 min',              defaultSets:1, advanceWhen:'N/A',
         note:'Easy walk/jog until HR drops below 130. Calf raises × 20, hip flexor stretch 60s/side, foam roll quads. Threshold days create significant quad/calf stress — cool-down matters.' }
+    ]
+  },
+  { schedIdx: 8, name: 'Upper Body 1', type: 'push', emoji: '🅰️',
+    ogNote: 'OG: V-Push strength + H-Pull strength + H-Push strength + L-Sit skill. Warm-up activates shoulders before loading. Prehab strengthening at end. Twice-weekly upper frequency drives progression faster than 1×/week splits.',
+    exercises: [
+      { id:'u1_warmup',    name:'Warm-Up / Activation',           ogType:'warmup',    target:'4–6 min',     defaultSets:1, advanceWhen:'N/A',
+        note:'Shoulder-focused activation: arm circles forward/back 10 each, wrist circles 10, scapular CARs 5, band pull-aparts 15, scap push-ups 10, dead hang 20s. Goal: blood flow + scap awake, NOT fatigue. Skip if walking into session warm.' },
+      { id:'u1_lsit',      name:'L-Sit Progression',              ogType:'skill',     target:'4 × 10–20s',  defaultSets:4, advanceWhen:'4×20s clean → advance to harder surface or extend hold',
+        note:'Tuck L-sit on floor → legs extended → push-up bars → rings. Fresh CNS first. Hold timer below. Compression and core strength fundamental to all OG progressions.' },
+      { id:'u1_vpush',     name:'V-Push Progression',             ogType:'strength',  target:'4 × 3–5',     defaultSets:4, advanceWhen:'3×5 clean → advance variation (e.g., HSPU negatives → wall HSPU → free HSPU)',
+        note:'Wk1-4: Elevated pike push-up. Wk5-8: HSPU negatives (5s lower, kick back up). Wk9+: Wall HSPU. 2–3 min rest. Heaviest movement of the day — go first while fresh.' },
+      { id:'u1_hpull',     name:'H-Pull Progression',             ogType:'strength',  target:'4 × 5–8',     defaultSets:4, advanceWhen:'3×8 → archer row → one-arm row progression',
+        note:'Horizontal ring row, feet elevated for harder. Pull chest to rings, scapulae squeezed at top. 2–3 min rest. Balances pressing volume — pull > push prevents shoulder issues.' },
+      { id:'u1_hpush',     name:'H-Push Progression',             ogType:'strength',  target:'3 × 6–8',     defaultSets:3, advanceWhen:'3×8 clean → ring push-up → archer push-up → ring dip',
+        note:'Ring push-up (rings shoulder height). Strict tempo: 2s down, 1s pause, drive up. 2 min rest. Third strength movement is moderate intensity — quality over grinder reps.' },
+      { id:'u1_curls',     name:'Ring / Band Bicep Curls',        ogType:'accessory', target:'3 × 10–12',   defaultSets:3, advanceWhen:'N/A — elbow health + arm volume',
+        note:'Underhand ring rows with short ROM, or band curls. Protects elbows under heavy pull loads. 60–90s rest.' },
+      { id:'u1_facepull',  name:'Band Face Pulls',                ogType:'prehab',    target:'3 × 15–20',   defaultSets:3, advanceWhen:'N/A — every session forever',
+        note:'Band at chest height. Pull to face, thumbs to ears, external rotation at end range. Non-negotiable shoulder health. Pair with scap push-ups if shoulders feel tight.' },
+      { id:'u1_dislocates',name:'Band Dislocates + YTW',          ogType:'prehab',    target:'2 × 10 each', defaultSets:2, advanceWhen:'N/A — shoulder mobility',
+        note:'Band dislocates over head front-to-back (slow). YTW lying face down. OG shoulder bulletproofing protocol.' }
+    ]
+  },
+  { schedIdx: 9, name: 'Upper Body 2', type: 'pull', emoji: '🅱️',
+    ogNote: 'OG: V-Push skill (handstand) + V-Pull strength + H-Push volume. Pairs with Upper 1 for full 2×/week pattern coverage. Handstand goes first while CNS is fresh.',
+    exercises: [
+      { id:'u2_warmup',    name:'Warm-Up / Activation',           ogType:'warmup',    target:'4–6 min',     defaultSets:1, advanceWhen:'N/A',
+        note:'Wrist warm-up sequence (palm presses, finger pulses, wrist circles) — handstand-critical. Then scap CARs, dead hang 20s, scap pulls 5, hollow body 20s. Wrist prep is non-negotiable before handstand work.' },
+      { id:'u2_handstand', name:'Handstand Progression',          ogType:'skill',     target:'4 × 20–60s',  defaultSets:4, advanceWhen:'Hold 60s wall → attempt freestanding chest-to-wall → freestanding',
+        note:'Straight-body kick-up to wall. Shoulders shrugged into ears, ribs tucked, glutes squeezed. Fresh CNS only — always first. Hold timer below. Builds the V-push skill foundation.' },
+      { id:'u2_vpull',     name:'V-Pull Progression',             ogType:'strength',  target:'4 × 3–5',     defaultSets:4, advanceWhen:'3×5 clean → L-sit pull-up → archer → weighted',
+        note:'Wk1-4: Strict pull-up. Wk5-8: Tuck L-sit pull-up. Wk9+: Archer or weighted. Full ROM, dead hang to chin over bar. 2–3 min rest. Heaviest pull of the week — go fresh.' },
+      { id:'u2_pushvol',   name:'Push-up Volume (H-Push)',        ogType:'strength',  target:'4 × 8–12',    defaultSets:4, advanceWhen:'4×12 clean → harder variation or load (vest/backpack)',
+        note:'Standard or decline push-ups. Sub-maximal effort — leave 2 reps in tank per set. 2-second pause at bottom. 90s–2min rest. Hypertrophy volume for chest/triceps.' },
+      { id:'u2_pullapart', name:'Band Pull-Aparts',               ogType:'prehab',    target:'3 × 15–20',   defaultSets:3, advanceWhen:'N/A — daily-tolerable',
+        note:'Band at chest, pull to T position. Rear delts + posture. Nearly impossible to overdo. Add a second set during the day if shoulders feel tight.' },
+      { id:'u2_facepull',  name:'Band Face Pulls',                ogType:'prehab',    target:'3 × 15',      defaultSets:3, advanceWhen:'N/A — every session forever',
+        note:'Same as Upper 1 — non-negotiable rear delt + rotator cuff health. Keeps shoulders bulletproof under heavy pulling.' },
+      { id:'u2_scap',      name:'Scapular Pulls + Dead Hang',     ogType:'prehab',    target:'3 × 5 + 30s', defaultSets:3, advanceWhen:'N/A — grip + scap health',
+        note:'Full passive hang 30s, then 5 scap pulls (depress shoulders without bending elbows). Builds grip endurance + shoulder integrity for all V-pull work.' }
     ]
   }
 ];
@@ -1547,8 +1593,8 @@ function resolveExercise(ex) {
 function dateKey(d) { return d.toISOString().split('T')[0]; }
 function todayKey() { return dateKey(new Date()); }
 function getScheduleForDate(d) {
-  // Mon=Push(0), Tue=Cardio(1), Wed=Pull(2), Thu=Adventure(3), Fri=Legs(4), Sat=LongCardio(5), Sun=Rest(6)
-  const map = [6,0,1,2,3,4,5]; // JS Sunday=0 → schedule index
+  // Mon=Upper1(8), Tue=Threshold(7), Wed=Upper2(9), Thu=EasyBase(1), Fri=Legs(4), Sat=LongRun(5), Sun=Rest(6)
+  const map = [6,8,7,9,1,4,5]; // JS Sunday=0 → schedule index
   const override = state.overrides && state.overrides[dateKey(d)];
   if (override !== undefined) return TRAINING_SCHEDULE[override];
   return TRAINING_SCHEDULE[map[d.getDay()]];
@@ -2044,8 +2090,8 @@ function renderTracker(dk) {
 `;
 
   // Exercises
-  const ogTypeLabel = { skill:'SKILL', strength:'STRENGTH', accessory:'ACCESSORY', core:'CORE', prehab:'PREHAB' };
-  const ogTypeClass = { skill:'type-skill', strength:'type-strength', accessory:'type-accessory', core:'type-core', prehab:'type-prehab' };
+  const ogTypeLabel = { warmup:'WARM-UP', skill:'SKILL', strength:'STRENGTH', accessory:'ACCESSORY', core:'CORE', prehab:'PREHAB' };
+  const ogTypeClass = { warmup:'type-warmup', skill:'type-skill', strength:'type-strength', accessory:'type-accessory', core:'type-core', prehab:'type-prehab' };
 
   for (const rawEx of sched.exercises) {
     const ex = resolveExercise(rawEx);
@@ -2321,7 +2367,7 @@ const POST_WORKOUT_TOOL = {
           type: 'object',
           properties: {
             date:     { type: 'string',  description: 'YYYY-MM-DD' },
-            schedIdx: { type: 'integer', description: '0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio/Adventure, 6=Rest+Recover, 7=Threshold Cardio' },
+            schedIdx: { type: 'integer', description: '1=Easy Base Run, 3=Adventure (wildcard), 4=Lower Body, 5=Long Run/Adventure, 6=Rest+Recover, 7=Threshold Cardio, 8=Upper Body 1 (V-Push/H-Pull strength + L-Sit), 9=Upper Body 2 (Handstand + V-Pull strength + Push-up volume). Schedules 0 and 2 are LEGACY (old Push/Pull format) — do NOT schedule these; use 8 or 9 instead.' },
             reason:   { type: 'string',  description: 'One sentence — why this specific swap.' }
           },
           required: ['date','schedIdx','reason']
@@ -2503,8 +2549,9 @@ function showPlanChangeModal(proposal, dk) {
   const existing = document.getElementById('planChangeModal');
   if (existing) existing.remove();
 
-  const schedNames  = ['Upper Push','Zone 2 Cardio','Upper Pull','Adventure Day','Lower Body','Long Cardio / Adventure','Rest + Recover'];
-  const schedColors = ['var(--push)','var(--cardio)','var(--pull)','var(--other)','var(--legs)','var(--cardio)','var(--muted)'];
+  const schedNames  = TRAINING_SCHEDULE.map(s => s.name);
+  const typeColorMap = {push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)', cardio:'var(--cardio)', flex:'var(--other)', rest:'var(--muted)'};
+  const schedColors = TRAINING_SCHEDULE.map(s => typeColorMap[s.type] || 'var(--text)');
   const changes = (proposal.changes || []).filter(c => c.date > dk); // safety: future only
 
   const changesHtml = changes.length === 0
@@ -2844,8 +2891,41 @@ function normalizeGarminType(type) {
 }
 
 // ====================== AI COACH ======================
+function buildDateAnchor() {
+  const today = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dow = today.getDay(); // 0=Sun
+  const todayStr = today.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  const iso = today.toISOString().split('T')[0];
+  // Week starts Monday
+  const monOffset = (dow === 0 ? -6 : 1 - dow);
+  const monday = new Date(today); monday.setDate(today.getDate() + monOffset);
+  const fmt = (d) => `${days[d.getDay()].slice(0,3)} ${d.getMonth()+1}/${d.getDate()}`;
+  const fmtIso = (d) => d.toISOString().split('T')[0];
+  const week = [];
+  for (let i=0; i<7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const tag = fmtIso(d) === iso ? ' ← TODAY' : '';
+    week.push(`${fmt(d)} (${fmtIso(d)})${tag}`);
+  }
+  const lastWeek = [];
+  for (let i=7; i>=1; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    lastWeek.push(`${fmt(d)} (${fmtIso(d)})`);
+  }
+  return `TODAY: ${todayStr} · ISO ${iso}
+THIS WEEK (Mon→Sun): ${week.join(' | ')}
+LAST 7 DAYS: ${lastWeek.join(' | ')}
+
+When the user names a weekday ("Tuesday", "last Friday", "this Saturday"), resolve it to a specific ISO date from the lists above. Never assume what week they mean — if it's ambiguous (e.g., "Saturday" could be past or upcoming), ask, but default to UPCOMING for future-tense and PAST for past-tense reports.`;
+}
+
 function buildSystemPrompt() {
   return `You are Coach Claude — Marko's personal AI fitness coach. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
+
+═══ DATE & WEEK ANCHOR (always use these) ═══
+${buildDateAnchor()}
+
 
 ═══ COACHING PROTOCOL — FOLLOW THIS EVERY TIME ═══
 
@@ -2870,7 +2950,7 @@ Before responding to ANY message, run this mental checklist:
 
 4. OPTIMIZE FOR GOALS every time:
    - Primary: OG progression — advance when 3×8 clean, hold when form breaks
-   - Secondary: Aerobic base (Zone 2 3x/week minimum) + Threshold 1×/week
+   - Secondary: Aerobic base — 3 cardio days/week minimum (Easy Base + Threshold + Long Run) — non-negotiable
    - Tertiary: Recovery and adventure readiness
    - Never sacrifice progression quality for volume
    - PUSH FREQUENCY: 5–6 training days/week is fine when volume is managed. Don't let idle days accumulate — if recovery signals are positive, schedule the next session.
@@ -2890,16 +2970,58 @@ Pull-ups: 5×5 bodyweight — strong vertical pull base
 Running: 3–5 mi base ~9:10/mile, threshold ~8:36/mile; also cycles and hikes regularly
 Exceptional leg strength — well-positioned for hiking, pistol squats, adventure activities
 
-═══ WEEKLY TEMPLATE ═══
-Mon: Upper Push (0) | Tue: Zone 2 Cardio (1) | Wed: Upper Pull (2)
-Thu: Adventure/Active (3) | Fri: Lower Body (4) | Sat: Long Cardio (5) | Sun: Rest (6)
-Threshold Cardio (7) — schedule 1×/week in place of Zone 2 or Adventure slot when ready
+═══ WEEKLY TEMPLATE (current program — May 2026 onward) ═══
+Mon: Upper Body 1 (8) — V-Push/H-Pull strength + L-Sit skill
+Tue: Threshold Cardio (7) — Zone 4, HR 160–175, 20–35 min
+Wed: Upper Body 2 (9) — Handstand + V-Pull strength + Push-up volume
+Thu: Easy Base Run (1) — 3–4 mi Zone 2, HR 130–150
+Fri: Lower Body (4) — pistol + BSS + nordic + jump squats
+Sat: Long Run / Adventure (5) — 60–90 min Z2 OR hike/bike/climb/paddle (2–5h)
+Sun: Rest + Recover (6) — mobility, easy walk only
 
-STACKING STRENGTH + CARDIO:
-• Strength AM + easy cardio PM = standard practice, not a special exception. Endorse it proactively.
-• Strength in the morning before a Zone 2 ride/run = ideal (CNS fresh for lifts, aerobic work flushes lactate)
-• Threshold (schedIdx 7) should NOT be stacked with heavy CNS strength on the same day
-• 5–6 active days per week is the TARGET, not the ceiling — schedule aggressively within OG recovery rules
+LEGACY indices: 0 (Upper Push) and 2 (Upper Pull) are the OLD program. Do NOT schedule them. Use 8 and 9.
+
+═══ MOVEMENT PATTERN FREQUENCY (each pattern 2×/week) ═══
+• V-Push: Upper 1 strength (HSPU progression) + Upper 2 skill (handstand)
+• H-Pull: Upper 1 strength (rows) + Upper 2 accessory (pull-aparts, face pulls)
+• H-Push: Upper 1 strength (ring push-up progression) + Upper 2 volume (push-ups)
+• V-Pull: Upper 2 strength (pull-up progression) + Upper 1 accessory (curls + dead hangs)
+• Core: L-Sit on Upper 1 + hollow holds in Upper 2 warm-up
+• Legs: Friday session + indirect from running/long-day
+
+PUSH/PULL BALANCE: Pull volume ≥ push volume weekly. Face pulls + pull-aparts on EVERY upper day. Non-negotiable.
+
+═══ STACKING & TIMING RULES ═══
+• Strength AM + easy cardio PM = standard, not special. Endorse it proactively.
+• Threshold (Tue) should NOT be stacked with heavy CNS strength same day — it counts as high CNS itself.
+• Long run + Legs = 2 days minimum between (currently Sat→Fri = 6 days, fine).
+• Upper 1 → Upper 2 has 1 rest day buffer (Tue threshold) — that's enough because they don't overlap movement patterns heavily.
+• 5–6 active days/week is the TARGET, not the ceiling.
+
+═══ ADVENTURE SWAP MATRIX ═══
+When Marko reports an adventure or asks to swap, map to the closest training slot:
+
+| Adventure                           | Replaces            | Notes                                      |
+|-------------------------------------|---------------------|--------------------------------------------|
+| Easy hike <2h, rolling              | Easy Base (Thu)     | Same Z2 stimulus, count as base run        |
+| Long hike 3h+, elevation            | Long Run (Sat)      | Counts as long aerobic; reduce next Legs   |
+| Easy/Z2 bike or gravel ride         | Easy Base or Long   | Distance-dependent: <90min → Base, more → Long |
+| Hard MTB (intervals, climbing)      | Threshold (Tue)     | Only if HR genuinely hit Z4+               |
+| Trail run hard / race effort        | Threshold           | Same                                       |
+| Climbing day                        | Upper 1 OR Upper 2  | Counts as pulling + skill; pick which day  |
+| Swim / paddle / surf                | Easy Base or Long   | Aerobic — slot by duration                 |
+
+When swapping, use update_schedule with the new schedIdx AND log_workout with substitution text. Always tell Marko which slot you mapped it to.
+
+═══ OVERTRAINING GUARDRAILS — ALWAYS CHECK BEFORE PRESCRIBING ═══
+Before scheduling any session, scan the prior 7 days and flag if:
+• 3+ CNS-heavy sessions (Upper 1, Upper 2, Legs, Threshold) hit within any 4-day rolling window
+• 2 rest days haven't occurred in the past 9 days
+• Long run + Threshold + 2h+ adventure all in the same week beyond ~4h total Z3+ time
+• Marko reports soreness in muscle group X AND that group is hit in the next 24h
+• Sleep <6h reported AND a heavy CNS session is on deck
+
+If any flag trips: propose an Easy Base or Rest insert, or downshift the session intensity. State the flag explicitly so he sees the reasoning.
 
 ═══ OVERCOMING GRAVITY FRAMEWORK ═══
 
@@ -2911,8 +3033,7 @@ THE 6 MOVEMENT PATTERNS (hit all 6 every week, 2×/week each):
 • Core: hollow body hold → tuck L-sit → L-sit on bars → L-sit on rings → V-sit
 • Legs: box squat/BSS → box pistol → wall-assisted pistol → full pistol + nordic curl
 
-SESSION ORDER (never deviate — this is OG law):
-  Skill → Strength → Secondary Strength → Accessory → Core → Prehab
+SESSION ORDER: Warm-Up → Skill → Strength → Secondary Strength → Accessory → Core → Prehab (full breakdown in SESSION STRUCTURE block below). Prehab strengthening goes at END — dynamic activation/warm-up at START.
 
 REP RANGES: 1-5 = max strength | 5-8 = strength | 8-12 = hypertrophy | 12-20 = endurance
 PROGRESSION: 3×8 clean reps at current level → advance variation. Never rush it.
@@ -2945,85 +3066,27 @@ ENERGY SYSTEMS (for "boundless energy"):
 → If hike was >3hrs with elevation, treat as long cardio session — no additional cardio needed that day
 
 "I'm sore / fatigued":
-→ Don't reschedule — assess which muscles and prescribe accordingly
-→ Sore legs → push/pull session is fine, maybe add mobility
-→ Sore shoulders → lower body + core only, skip all pressing
-→ General fatigue → rest, or Zone 2 only (never train hard when system-fatigued)
+→ Don't reschedule blindly — assess which muscles and prescribe accordingly
+→ Sore legs → Upper 1 or Upper 2 is fine, maybe add mobility; defer cardio if calves
+→ Sore shoulders → Legs + core only, skip all pressing AND pulling
+→ Sore from pulling → Lower body or Easy Base; skip Upper 2 if V-Pull is on deck
+→ General fatigue → Rest, or Easy Base only (never train hard when system-fatigued)
+→ Check OVERTRAINING GUARDRAILS above — if any flag tripped, propose recovery insert
 
 "I want to optimize / improve my plan":
 → Call get_progression_status for each relevant pattern
 → Identify the weakest/most underdeveloped pattern
 → Prioritize that pattern in next 2 sessions
 
-Today's date: ${new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}
-Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}
+═══ SESSION STRUCTURE — ALWAYS this order (OG law) ═══
+   a) WARM-UP / ACTIVATION (3–6 min, movement-specific — added to top of every strength day)
+   b) SKILL WORK (handstand, L-sit — needs fresh CNS, 10–15 min)
+   c) STRENGTH work (primary pattern, 4×3–8, 2–3 min rest)
+   d) SECONDARY STRENGTH (second pattern, 3×5–8)
+   e) HYPERTROPHY / ACCESSORY (3×8–12, higher reps, less rest)
+   f) PREHAB / SHOULDER HEALTH at END (face pulls, scapular work — done at session end, after main lifts, when fatigue won't compromise the working sets)
 
-═══ ATHLETE PROFILE ═══
-- Name: Marko
-- Training history: 110 gym sessions (Oct 2024–Apr 2026), Push/Pull/Legs split
-- Peak lifts: Bench 165 lbs, Squat 195 lbs, RDL 175 lbs, Leg Press 450 lbs, OHP 110 lbs (machine)
-- Pull-ups: 5×5 bodyweight — strong vertical pull base
-- Running: 3–5 mi at ~9:10/mile base, threshold at ~8:36/mile
-- Also cycles (1hr sessions), hikes regularly
-- Strong aerobic base; leg strength is exceptional (great for hiking/adventures)
-
-═══ TRAINING SETUP ═══
-- Equipment: yoga mat, elevated surfaces; possibly rings, pull-up bar, push-up bars, bands
-- Goal: Maintain strength, "boundless energy" for adventure (hike, bike, swim, climb)
-- 12-week program structure: Mon Push / Tue Cardio / Wed Pull / Thu Adventure / Fri Legs / Sat Long Cardio / Sun Rest
-
-═══ OVERCOMING GRAVITY FRAMEWORK (Steven Low) ═══
-
-1. THE 6 MOVEMENT PATTERNS — train all six every week:
-   • Horizontal Push: push-ups → ring push-ups → archer push-ups → ring dips
-   • Vertical Push: pike push-up → elevated pike → wall HSPU → freestanding HSPU
-   • Horizontal Pull: incline ring row → horizontal ring row → archer row → one-arm row
-   • Vertical Pull: pull-up → L-sit pull-up → archer pull-up → one-arm chin progression
-   • Core (anti-extension/compression): hollow body → L-sit on floor → L-sit on bars → L-sit on rings → V-sit
-   • Legs: split squat → pistol progression → nordic curl → shrimp squat
-
-2. REP RANGES (OG standard):
-   • 1–5 reps = Max strength / neurological
-   • 5–8 reps = Strength (primary goal for skill movements)
-   • 8–12 reps = Hypertrophy (accessory work)
-   • 12–20 reps = Endurance / conditioning
-   Rule: Work toward 3 sets of 8 at a given progression level → then advance to the next harder variation. Never rush progressions.
-
-3. SESSION STRUCTURE — ALWAYS this order (OG law):
-   a) SKILL WORK first (front lever tuck, L-sit, handstand — needs fresh CNS, 10–15 min)
-   b) STRENGTH work (primary movement pattern, 4×5–8 reps, 2–3 min rest)
-   c) SECONDARY STRENGTH (second pattern, 3×5–8)
-   d) HYPERTROPHY / ACCESSORY (3×8–12, higher reps, less rest)
-   e) PREHAB / SHOULDER HEALTH (face pulls, scapular work — non-negotiable)
-
-4. STRAIGHT ARM vs. BENT ARM (critical OG distinction):
-   Straight-arm moves (planche, front lever, rings support) → different tendons than bent-arm (push-ups, pull-ups, rows). Don't exhaust bent-arm strength before straight-arm skill work. Keep them in the right order or on separate days.
-
-5. VOLUME TARGETS (OG beginner–intermediate):
-   • 25–50 quality reps per movement pattern per session
-   • 2× per week per pattern (e.g., push on Mon + partial push on Thu)
-   • Prioritize quality over quantity — "accumulate quality volume"
-
-6. MARKO'S STARTING PROGRESSION LEVELS:
-   • H-Push: Ring push-up level (strong enough for ring dips in Wk5+)
-   • V-Push: Pike push-up → elevated pike (target: wall HSPU by Wk9)
-   • H-Pull: Inclined ring row → horizontal ring row (target: archer row Wk9)
-   • V-Pull: Pull-up 5×5 → L-sit pull-up (target: weighted or archer Wk9)
-   • Core: Hollow body hold → L-sit on bars (target: L-sit on rings Wk9)
-   • Legs: Bulgarian split squat → box pistol (target: full pistol Wk9)
-   • Hamstrings: Nordic curl negatives (3×3–5) → partial concentric (target: full Wk9)
-
-7. OG PROGRESSION RULE: "When you achieve 3 sets of 5 quality reps at the harder variation with good form, you've earned it. Until then, stay and accumulate." Never sacrifice form for progression speed.
-
-8. ENERGY SYSTEM WORK (for "boundless energy"):
-   • Easy aerobic (Zone 2, HR 130–150): 3×/week minimum — builds mitochondrial density
-   • Threshold work (Zone 4, HR 160–175): schedIdx 7 — schedule 1×/week to raise lactate threshold. Non-negotiable once base is established.
-   • Threshold should NOT be stacked with heavy CNS strength on the same day — it counts as high CNS load itself
-   • Strength AM + easy cardio PM on the same day = standard practice; endorse it proactively when loading permits
-   • Adventure activities count as training — hiking = legs+cardio, cycling = cardio, swimming = full body
-   • 5–6 active days/week is the TARGET — if recovery signals are positive, schedule the next session rather than defaulting to rest
-
-9. TENDON HEALTH (OG emphasis): Tendons adapt 3–10× slower than muscles. Progress conservatively. If joints feel achy, drop volume 30% and add more prehab. Shoulder health (face pulls, scapular pulls) is non-negotiable every session.
+STRAIGHT-ARM vs. BENT-ARM: Don't exhaust bent-arm strength (push-ups, pull-ups, rows) before straight-arm skill work (planche, front lever). Order matters or separate days.
 
 ═══ COACHING STYLE ═══
 - Concise and practical — Marko is athletic and self-aware
@@ -3031,9 +3094,9 @@ Current time: ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'
 - When he reports doing something different, adapt and affirm — adventures COUNT as training
 - When prescribing work, always specify: sets × reps, rest periods, progression standard
 - Format: **bold** for exercise names, use line breaks for clarity
-- PUSH FREQUENCY: 5–6 training days/week is fine when volume is managed. Don't let idle days accumulate — if recovery signals are positive, schedule the next session
-- STACKING: Strength AM + easy cardio PM is standard practice, not an exception. Actively suggest it when it fits the week
-- Today's date: ${new Date().toLocaleDateString()}
+- PUSH FREQUENCY: 5–6 training days/week is fine when volume is managed
+- STACKING: Strength AM + easy cardio PM is standard. Actively suggest it when it fits.
+- WEEKDAY RESOLUTION: when Marko names a day, resolve it via the DATE ANCHOR at the top of this prompt — never guess.
 
 ═══ MULTI-ACTIVITY DAYS ═══
 Marko often stacks multiple activities on the same day — e.g. a strength session in the morning and a gravel ride in the afternoon. The app tracks both via an "Additional Activities" log attached to each day.
@@ -3060,7 +3123,7 @@ const AI_TOOLS = [
       type: 'object',
       properties: {
         date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-        schedIdx: { type: 'integer', description: 'Schedule index: 0=Upper Push, 1=Zone2 Cardio, 2=Upper Pull, 3=Adventure Day, 4=Lower Body, 5=Long Cardio, 6=Rest, 7=Threshold Cardio' },
+        schedIdx: { type: 'integer', description: 'Schedule index: 1=Easy Base Run, 3=Adventure (wildcard), 4=Lower Body, 5=Long Run/Adventure, 6=Rest, 7=Threshold Cardio, 8=Upper 1 (V-Push/H-Pull strength), 9=Upper 2 (Handstand + V-Pull strength). 0 and 2 are legacy — do not use.' },
         note: { type: 'string', description: 'Why this day was changed (optional)' }
       },
       required: ['date', 'schedIdx']
@@ -3093,7 +3156,7 @@ const AI_TOOLS = [
             type: 'object',
             properties: {
               date: { type: 'string', description: 'YYYY-MM-DD' },
-              schedIdx: { type: 'integer', description: '0=Push,1=Cardio,2=Pull,3=Adventure,4=Legs,5=LongCardio,6=Rest,7=ThresholdCardio' },
+              schedIdx: { type: 'integer', description: '1=EasyBase,3=Adventure,4=Legs,5=LongRun,6=Rest,7=Threshold,8=Upper1,9=Upper2 (0 and 2 are legacy — do not use)' },
               note: { type: 'string' }
             },
             required: ['date', 'schedIdx']
