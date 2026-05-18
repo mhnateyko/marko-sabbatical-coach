@@ -856,7 +856,7 @@
         <div class="day-card">
           <div class="day-name">Mon</div>
           <div class="day-type push">Upper Body 1</div>
-          <div class="day-detail">L-Sit · V-Push · H-Pull · H-Push · Curls · Prehab</div>
+          <div class="day-detail">L-Sit · V-Push Prog · H-Pull Prog · Push-up Volume · Curls · Prehab</div>
         </div>
         <div class="day-card">
           <div class="day-name">Tue</div>
@@ -866,7 +866,7 @@
         <div class="day-card">
           <div class="day-name">Wed</div>
           <div class="day-type pull">Upper Body 2</div>
-          <div class="day-detail">Handstand · V-Pull · Push-up Volume · Prehab</div>
+          <div class="day-detail">Handstand · V-Pull Prog · H-Push Prog · Pull-Aparts · Prehab</div>
         </div>
         <div class="day-card">
           <div class="day-name">Thu</div>
@@ -1496,7 +1496,7 @@ const TRAINING_SCHEDULE = [
     ]
   },
   { schedIdx: 8, name: 'Upper Body 1', type: 'push', emoji: '🅰️',
-    ogNote: 'OG: V-Push strength + H-Pull strength + H-Push strength + L-Sit skill. Warm-up activates shoulders before loading. Prehab strengthening at end. Twice-weekly upper frequency drives progression faster than 1×/week splits.',
+    ogNote: 'OG: V-Push strength + H-Pull strength + H-Push volume + L-Sit skill. Two heavy strength progressions, one sub-max volume movement — keeps CNS load reasonable. Warm-up activates shoulders before loading. Prehab at end.',
     exercises: [
       { id:'u1_warmup',    name:'Warm-Up / Activation',           ogType:'warmup',    target:'4–6 min',     defaultSets:1, advanceWhen:'N/A',
         note:'Shoulder-focused activation: arm circles forward/back 10 each, wrist circles 10, scapular CARs 5, band pull-aparts 15, scap push-ups 10, dead hang 20s. Goal: blood flow + scap awake, NOT fatigue. Skip if walking into session warm.' },
@@ -1506,8 +1506,8 @@ const TRAINING_SCHEDULE = [
         note:'Wk1-4: Elevated pike push-up. Wk5-8: HSPU negatives (5s lower, kick back up). Wk9+: Wall HSPU. 2–3 min rest. Heaviest movement of the day — go first while fresh.' },
       { id:'u1_hpull',     name:'H-Pull Progression',             ogType:'strength',  target:'4 × 5–8',     defaultSets:4, advanceWhen:'3×8 → archer row → one-arm row progression',
         note:'Horizontal ring row, feet elevated for harder. Pull chest to rings, scapulae squeezed at top. 2–3 min rest. Balances pressing volume — pull > push prevents shoulder issues.' },
-      { id:'u1_hpush',     name:'H-Push Progression',             ogType:'strength',  target:'3 × 6–8',     defaultSets:3, advanceWhen:'3×8 clean → ring push-up → archer push-up → ring dip',
-        note:'Ring push-up (rings shoulder height). Strict tempo: 2s down, 1s pause, drive up. 2 min rest. Third strength movement is moderate intensity — quality over grinder reps.' },
+      { id:'u1_pushvol',   name:'Push-up Volume (H-Push)',        ogType:'accessory', target:'3 × 10–15',   defaultSets:3, advanceWhen:'3×15 clean → harder variation or load (vest/backpack)',
+        note:'Standard or decline push-ups. Sub-maximal effort — leave 2 reps in tank per set. 2-second pause at bottom. 60–90s rest. Hypertrophy volume after the heavy V-Push + H-Pull strength work. H-Push *strength* lives on Upper 2 (fresh).' },
       { id:'u1_curls',     name:'Ring / Band Bicep Curls',        ogType:'accessory', target:'3 × 10–12',   defaultSets:3, advanceWhen:'N/A — elbow health + arm volume',
         note:'Underhand ring rows with short ROM, or band curls. Protects elbows under heavy pull loads. 60–90s rest.' },
       { id:'u1_facepull',  name:'Band Face Pulls',                ogType:'prehab',    target:'3 × 15–20',   defaultSets:3, advanceWhen:'N/A — every session forever',
@@ -1517,7 +1517,7 @@ const TRAINING_SCHEDULE = [
     ]
   },
   { schedIdx: 9, name: 'Upper Body 2', type: 'pull', emoji: '🅱️',
-    ogNote: 'OG: V-Push skill (handstand) + V-Pull strength + H-Push volume. Pairs with Upper 1 for full 2×/week pattern coverage. Handstand goes first while CNS is fresh.',
+    ogNote: 'OG: V-Push skill (handstand) + V-Pull strength + H-Push strength. Push/pull alternation — pulling between presses keeps the chest fresh for H-Push. Pairs with Upper 1 for full 2×/week pattern coverage.',
     exercises: [
       { id:'u2_warmup',    name:'Warm-Up / Activation',           ogType:'warmup',    target:'4–6 min',     defaultSets:1, advanceWhen:'N/A',
         note:'Wrist warm-up sequence (palm presses, finger pulses, wrist circles) — handstand-critical. Then scap CARs, dead hang 20s, scap pulls 5, hollow body 20s. Wrist prep is non-negotiable before handstand work.' },
@@ -1525,8 +1525,8 @@ const TRAINING_SCHEDULE = [
         note:'Straight-body kick-up to wall. Shoulders shrugged into ears, ribs tucked, glutes squeezed. Fresh CNS only — always first. Hold timer below. Builds the V-push skill foundation.' },
       { id:'u2_vpull',     name:'V-Pull Progression',             ogType:'strength',  target:'4 × 3–5',     defaultSets:4, advanceWhen:'3×5 clean → L-sit pull-up → archer → weighted',
         note:'Wk1-4: Strict pull-up. Wk5-8: Tuck L-sit pull-up. Wk9+: Archer or weighted. Full ROM, dead hang to chin over bar. 2–3 min rest. Heaviest pull of the week — go fresh.' },
-      { id:'u2_pushvol',   name:'Push-up Volume (H-Push)',        ogType:'strength',  target:'4 × 8–12',    defaultSets:4, advanceWhen:'4×12 clean → harder variation or load (vest/backpack)',
-        note:'Standard or decline push-ups. Sub-maximal effort — leave 2 reps in tank per set. 2-second pause at bottom. 90s–2min rest. Hypertrophy volume for chest/triceps.' },
+      { id:'u2_hpush',     name:'H-Push Progression',             ogType:'strength',  target:'4 × 5–8',     defaultSets:4, advanceWhen:'3×8 clean → ring push-up → archer push-up → ring dip',
+        note:'Ring push-up (rings shoulder height). Strict tempo: 2s down, 1s pause, drive up. 2–3 min rest. Comes after Handstand (skill, doesn\'t pre-fatigue pressing) and V-Pull (opposite pattern) — your chest and triceps are fresh. This is the day to push H-Push gains.' },
       { id:'u2_pullapart', name:'Band Pull-Aparts',               ogType:'prehab',    target:'3 × 15–20',   defaultSets:3, advanceWhen:'N/A — daily-tolerable',
         note:'Band at chest, pull to T position. Rear delts + posture. Nearly impossible to overdo. Add a second set during the day if shoulders feel tight.' },
       { id:'u2_facepull',  name:'Band Face Pulls',                ogType:'prehab',    target:'3 × 15',      defaultSets:3, advanceWhen:'N/A — every session forever',
@@ -2984,10 +2984,12 @@ LEGACY indices: 0 (Upper Push) and 2 (Upper Pull) are the OLD program. Do NOT sc
 ═══ MOVEMENT PATTERN FREQUENCY (each pattern 2×/week) ═══
 • V-Push: Upper 1 strength (HSPU progression) + Upper 2 skill (handstand)
 • H-Pull: Upper 1 strength (rows) + Upper 2 accessory (pull-aparts, face pulls)
-• H-Push: Upper 1 strength (ring push-up progression) + Upper 2 volume (push-ups)
+• H-Push: Upper 1 volume (push-ups, sub-max) + Upper 2 strength (ring push-up progression) — H-Push *strength* lives on Upper 2 because Upper 1 already has V-Push + H-Pull as heavy work
 • V-Pull: Upper 2 strength (pull-up progression) + Upper 1 accessory (curls + dead hangs)
 • Core: L-Sit on Upper 1 + hollow holds in Upper 2 warm-up
 • Legs: Friday session + indirect from running/long-day
+
+CNS LOAD BALANCE: Each upper day has exactly TWO heavy strength progressions + ONE volume/accessory movement of the third pattern. Never 3 progressions in one session — leads to junk volume on the last lift.
 
 PUSH/PULL BALANCE: Pull volume ≥ push volume weekly. Face pulls + pull-aparts on EVERY upper day. Non-negotiable.
 
