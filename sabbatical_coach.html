@@ -998,7 +998,7 @@
       <div class="workout-template">
         <div class="wt-header" onclick="toggleWT(this)">
           <div class="wt-dot" style="background:var(--push)"></div>
-          <div class="wt-title">💪 Upper Push — OG Structure (35–50 min)</div>
+          <div class="wt-title">💪 Upper Body 1 — Legacy Push (reference only · session moved to Cycle D1)</div>
           <div class="wt-chevron">▼</div>
         </div>
         <div class="wt-body">
@@ -1041,7 +1041,7 @@
       <div class="workout-template">
         <div class="wt-header" onclick="toggleWT(this)">
           <div class="wt-dot" style="background:var(--pull)"></div>
-          <div class="wt-title">🔄 Upper Pull — OG Structure (35–50 min)</div>
+          <div class="wt-title">🔄 Upper Body 2 — Legacy Pull (reference only · session moved to Cycle D4)</div>
           <div class="wt-chevron">▼</div>
         </div>
         <div class="wt-body">
@@ -1581,6 +1581,13 @@ const EQUIPMENT_SUBS = {
     ]
   }
 };
+// Alias new program exercise IDs onto the same substitution rules so equipment fallbacks work
+// for Upper 1 / Upper 2 / Legs days too. Same shape, just different keys.
+EQUIPMENT_SUBS.u1_facepull  = EQUIPMENT_SUBS.face_pull;
+EQUIPMENT_SUBS.u2_facepull  = EQUIPMENT_SUBS.face_pull;
+EQUIPMENT_SUBS.u1_dislocates = EQUIPMENT_SUBS.dislocates;
+EQUIPMENT_SUBS.u2_pullapart = EQUIPMENT_SUBS.pull_aparts;
+EQUIPMENT_SUBS.u1_curls     = EQUIPMENT_SUBS.curls;
 
 // Returns the exercise as-is if equipment is available, otherwise the best substitute.
 // Returns null if the exercise should be skipped entirely.
@@ -1598,6 +1605,149 @@ function resolveExercise(ex) {
     }
   }
   return null; // no viable alternative — skip the exercise
+}
+
+// ====================== PROGRESSION SYSTEM ======================
+// One ladder per movement pattern. Index = current level. levelIdx 0 = easiest.
+// `repCriterion` = top-set reps needed for 3 sessions running to be "ready to advance".
+// `rpeMax` = top-set RPE must be ≤ this on all 3 sessions (≤8 = clean strength work).
+const PROGRESSION_LADDERS = {
+  v_push: {
+    name: 'Vertical Push', defaultLevelIdx: 1, repCriterion: 8, rpeMax: 8,
+    levels: ['Pike push-up', 'Elevated pike push-up', 'HSPU negative (5s)', 'Wall HSPU', 'Freestanding HSPU attempts', 'Freestanding HSPU']
+  },
+  h_push: {
+    name: 'Horizontal Push', defaultLevelIdx: 1, repCriterion: 8, rpeMax: 8,
+    levels: ['Incline push-up', 'Ring push-up', 'Archer push-up', 'Ring dip', 'Weighted ring dip']
+  },
+  v_pull: {
+    name: 'Vertical Pull', defaultLevelIdx: 0, repCriterion: 8, rpeMax: 8,
+    levels: ['Strict pull-up', 'Tuck L-sit pull-up', 'Archer pull-up', 'Weighted pull-up', 'One-arm chin progression']
+  },
+  h_pull: {
+    name: 'Horizontal Pull', defaultLevelIdx: 1, repCriterion: 8, rpeMax: 8,
+    levels: ['Inclined ring row', 'Horizontal ring row', 'Feet-elevated ring row', 'Archer ring row', 'One-arm row']
+  },
+  handstand: {
+    name: 'Handstand', defaultLevelIdx: 0, repCriterion: 60, rpeMax: 8, holdBased: true,
+    levels: ['Wall handstand 20s', 'Wall handstand 60s', 'Chest-to-wall handstand', 'Freestanding attempts', 'Freestanding 30s']
+  },
+  l_sit: {
+    name: 'L-Sit', defaultLevelIdx: 0, repCriterion: 20, rpeMax: 8, holdBased: true,
+    levels: ['Tuck L-sit on floor', 'One-leg extended', 'Full L-sit on floor', 'L-sit on push-up bars', 'L-sit on rings']
+  },
+  pistol: {
+    name: 'Pistol Squat', defaultLevelIdx: 0, repCriterion: 5, rpeMax: 8,
+    levels: ['Box squat → 1-leg stand', 'Wall-assisted partial', 'Unassisted partial', 'Full pistol squat']
+  },
+  nordic: {
+    name: 'Nordic Hamstring', defaultLevelIdx: 0, repCriterion: 6, rpeMax: 8,
+    levels: ['Nordic negatives 4-5s', 'Partial concentric', 'Full nordic curl']
+  },
+  push_vol: {
+    name: 'Push-up Volume', defaultLevelIdx: 1, repCriterion: 15, rpeMax: 8,
+    levels: ['Knee push-up', 'Standard push-up', 'Decline push-up', 'Loaded push-up (vest)']
+  }
+};
+
+// Map each schedule exercise ID to its pattern key. null = not tracked.
+const EX_TO_PATTERN = {
+  // Upper 1 (schedIdx 8)
+  u1_warmup: null, u1_lsit: 'l_sit', u1_vpush: 'v_push', u1_hpull: 'h_pull',
+  u1_pushvol: 'push_vol', u1_curls: null, u1_facepull: null, u1_dislocates: null,
+  // Upper 2 (schedIdx 9)
+  u2_warmup: null, u2_handstand: 'handstand', u2_vpull: 'v_pull', u2_hpush: 'h_push',
+  u2_pullapart: null, u2_facepull: null, u2_scap: null,
+  // Legs (schedIdx 4)
+  leg_warmup: null, pistol: 'pistol', bss: null, nordic: 'nordic',
+  jump_sq: null, calf: null, hip_mob: null,
+  // Cardio sessions are not pattern-tracked
+  // Legacy IDs (schedIdx 0, 2) — still map so historical data flows in
+  hs_hold: 'handstand', h_push: 'h_push', v_push: 'v_push', push_vol: 'push_vol',
+  l_sit: 'l_sit', face_pull: null, scap: null, v_pull: 'v_pull', h_pull: 'h_pull',
+  curls: null, pull_aparts: null, dislocates: null
+};
+
+function getProgression(patternKey) {
+  if (!state.progressions) state.progressions = {};
+  if (!state.progressions[patternKey]) {
+    const ladder = PROGRESSION_LADDERS[patternKey];
+    state.progressions[patternKey] = {
+      levelIdx: ladder ? ladder.defaultLevelIdx : 0,
+      advancedAt: null,
+      history: []
+    };
+  }
+  return state.progressions[patternKey];
+}
+
+function initProgressions() {
+  if (!state.progressions) state.progressions = {};
+  for (const key of Object.keys(PROGRESSION_LADDERS)) {
+    getProgression(key); // ensures default level is set
+  }
+}
+
+function advanceProgression(patternKey, direction = 1) {
+  const ladder = PROGRESSION_LADDERS[patternKey];
+  if (!ladder) return false;
+  const prog = getProgression(patternKey);
+  const newIdx = prog.levelIdx + direction;
+  if (newIdx < 0 || newIdx >= ladder.levels.length) return false;
+  prog.history = prog.history || [];
+  prog.history.push({ from: prog.levelIdx, to: newIdx, at: new Date().toISOString() });
+  prog.levelIdx = newIdx;
+  prog.advancedAt = dateKey(new Date());
+  saveState();
+  syncToSupabase(false);
+  return true;
+}
+
+// Returns 'ready' | 'maintain' | 'too_soon' | 'no_data' | 'not_tracked'
+function getAdvancementStatus(exId) {
+  const patternKey = EX_TO_PATTERN[exId];
+  if (!patternKey) return { status: 'not_tracked' };
+  const ladder = PROGRESSION_LADDERS[patternKey];
+  if (!ladder) return { status: 'not_tracked' };
+  const prog = getProgression(patternKey);
+  if (prog.levelIdx >= ladder.levels.length - 1) {
+    return { status: 'maintain', patternKey, ladder, prog, reason: 'Already at top of ladder' };
+  }
+  // Collect the last 5 sessions where this exercise was logged with done sets
+  const sessions = [];
+  const sortedDates = Object.keys(state.workouts || {}).sort().reverse();
+  for (const dk of sortedDates) {
+    const w = state.workouts[dk];
+    if (!w?.sets?.[exId]) continue;
+    const doneSets = w.sets[exId].filter(s => s.done);
+    if (doneSets.length === 0) continue;
+    sessions.push({ date: dk, sets: doneSets });
+    if (sessions.length >= 5) break;
+  }
+  if (sessions.length < 3) {
+    return { status: 'no_data', patternKey, ladder, prog, sessions, need: 3 - sessions.length };
+  }
+  // Check the 3 most recent: top-set reps ≥ criterion, RPE ≤ rpeMax on all done sets that have RPE
+  const recent3 = sessions.slice(0, 3);
+  let allClean = true;
+  for (const sess of recent3) {
+    const topReps = Math.max(...sess.sets.map(s => parseFloat(s.reps) || 0));
+    if (topReps < ladder.repCriterion) { allClean = false; break; }
+    const rpes = sess.sets.map(s => parseFloat(s.rpe)).filter(r => !isNaN(r));
+    if (rpes.length && Math.max(...rpes) > ladder.rpeMax) { allClean = false; break; }
+  }
+  if (allClean) {
+    // Respect a recent dismissal — suppress for ~7 days unless a brand-new session has been logged after dismissal
+    if (prog.dismissedAt) {
+      const sessionsSinceDismiss = sessions.filter(s => s.date > prog.dismissedAt).length;
+      const daysSince = Math.floor((Date.now() - new Date(prog.dismissedAt + 'T12:00:00').getTime()) / 86400000);
+      if (sessionsSinceDismiss < 2 && daysSince < 7) {
+        return { status: 'dismissed', patternKey, ladder, prog, sessions: recent3 };
+      }
+    }
+    return { status: 'ready', patternKey, ladder, prog, sessions: recent3 };
+  }
+  return { status: 'too_soon', patternKey, ladder, prog, sessions: recent3 };
 }
 
 // ====================== HELPERS ======================
@@ -1637,9 +1787,10 @@ function getScheduleForDate(d) {
   const cfg = getCycleConfig();
   const anchor = new Date(cfg.anchor + 'T12:00:00');
   const target = new Date(dateKey(d) + 'T12:00:00');
-  // Pre-anchor dates use the legacy weekly mapping for historical continuity
+  // Pre-anchor dates use the OLD Push/Pull/Legs weekly program (schedIdx 0 and 2 are legacy
+  // but they're what historical logs were recorded under). Sun→Sat: Rest/Push/Z2/Pull/Adv/Legs/Long
   if (target < anchor) {
-    const legacyMap = [6,8,7,9,1,4,5]; // Sun→Sat
+    const legacyMap = [6,0,1,2,3,4,5];
     return TRAINING_SCHEDULE[legacyMap[d.getDay()]];
   }
   const { pos } = getCyclePosition(d);
@@ -1653,6 +1804,7 @@ let state = {
   chatHistory: [],
   workouts: {},      // { [dateKey]: { sets: { [exId]: [{reps,weight,done}] }, note, completed, substitution } }
   overrides: {},     // { [dateKey]: schedIdx } — if user changed what type a day is
+  progressions: {},  // { [patternKey]: { levelIdx, advancedAt, history } }
   settings: {},
   currentTab: 'calendar'
 };
@@ -1665,6 +1817,11 @@ function loadState() {
       state = { ...state, ...parsed };
     }
   } catch(e) {}
+  // Defensive: ensure all top-level state shapes exist even if localStorage was corrupted
+  if (!state.workouts) state.workouts = {};
+  if (!state.overrides) state.overrides = {};
+  if (!state.progressions) state.progressions = {};
+  if (!state.chatHistory) state.chatHistory = [];
   // Auto-migrate: move API key from old separate localStorage key into state.settings
   if (!state.settings) state.settings = {};
   if (!state.settings.apiKey) {
@@ -1674,6 +1831,8 @@ function loadState() {
       saveState(); // persist migration immediately
     }
   }
+  // Initialize progression defaults for any patterns not yet tracked
+  initProgressions();
 }
 
 let _syncDebounce = null;
@@ -1839,7 +1998,7 @@ function renderTrainingProgress() {
 
   // Program day count
   const start = state.settings?.programStart;
-  const dayNum = start ? Math.max(1, Math.floor((new Date() - new Date(start)) / 86400000) + 1) : null;
+  const dayNum = start ? Math.max(1, Math.floor((new Date() - new Date(start + 'T12:00:00')) / 86400000) + 1) : null;
   const weekNum = dayNum ? Math.ceil(dayNum / 7) : null;
 
   if (totalCompleted === 0) {
@@ -2147,6 +2306,30 @@ function renderTracker(dk) {
     const subBadge = ex._substituted
       ? `<div style="font-size:10px;margin-top:5px;color:var(--warn);background:rgba(184,110,10,0.08);border:1px solid rgba(184,110,10,0.2);padding:3px 7px;border-radius:4px;display:inline-block;">↔ Substituted — ${ex._originalName} needs equipment you don't have</div>`
       : '';
+
+    // Progression tracking: show current level + advance banner if applicable
+    const advStatus = getAdvancementStatus(rawEx.id);
+    let levelBadge = '';
+    let advanceBanner = '';
+    if (advStatus.status !== 'not_tracked') {
+      const lvl = advStatus.prog.levelIdx;
+      const lvlName = advStatus.ladder.levels[lvl] || '?';
+      levelBadge = `<div style="font-size:10px;margin-top:4px;color:var(--accent);background:rgba(14,158,118,0.08);border:1px solid rgba(14,158,118,0.2);padding:3px 7px;border-radius:4px;display:inline-block;">📈 Level ${lvl+1}/${advStatus.ladder.levels.length}: ${lvlName}</div>`;
+      if (advStatus.status === 'ready') {
+        const nextLvl = advStatus.ladder.levels[lvl + 1];
+        advanceBanner = `
+          <div style="margin:10px 0;padding:12px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:8px;">
+            <div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:4px;">⬆ Ready to advance</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:8px;line-height:1.5;">You've hit the rep target 3 sessions in a row with controlled RPE. Move up to <strong>${nextLvl}</strong>?</div>
+            <button onclick="confirmAdvance('${advStatus.patternKey}','${dk}')" style="background:var(--accent);color:white;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;margin-right:6px;">Advance to ${nextLvl}</button>
+            <button onclick="dismissAdvance('${advStatus.patternKey}','${dk}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Not yet</button>
+          </div>`;
+      }
+    }
+
+    // RPE column is meaningless for warmup and prehab (no failure-tracking)
+    const showRPE = ex.ogType !== 'warmup' && ex.ogType !== 'prehab';
+
     html += `
       <div class="tracker-exercise" id="exblock-${rawEx.id}" style="${exDone ? 'border-color:rgba(34,197,94,0.4)' : ''}">
         <div class="tracker-ex-header">
@@ -2157,6 +2340,7 @@ function renderTracker(dk) {
             <div class="tracker-ex-name">${ex.name}</div>
             <div class="tracker-ex-target">${ex.target}</div>
             <div class="tracker-ex-note">${ex.note}</div>
+            ${levelBadge}
             ${ex.advanceWhen !== 'N/A' && ex.advanceWhen ? `<div style="font-size:10px;margin-top:4px;color:var(--accent);background:rgba(0,212,170,0.08);padding:3px 6px;border-radius:4px;display:inline-block">⬆ Advance when: ${ex.advanceWhen}</div>` : ''}
             ${subBadge}
             ${ex.ogType === 'skill' && /\ds/.test(ex.target) ? `
@@ -2166,18 +2350,19 @@ function renderTracker(dk) {
             </div>` : ''}
           </div>
         </div>
+        ${advanceBanner}
         <div class="set-table">
-          <div class="set-row" style="margin-bottom:4px;">
+          <div class="set-row${showRPE ? '' : ' set-row-no-rpe'}" style="margin-bottom:4px;">
             <div class="set-label">#</div>
             <div class="set-label">${ex.ogType==='cardio'||ex.id.includes('hang')||ex.id.includes('hold')||ex.id.includes('mob')||ex.id.includes('rest')||ex.id.includes('adv') ? 'Duration / Notes' : 'Reps'}</div>
-            <div class="set-label">${ex.ogType==='cardio'||['rest_walk','mob_full','adventure','adv2','z2_run','z2_alt','long_card'].includes(ex.id) ? 'HR / Distance' : 'Weight / Load'}</div>
-            <div class="set-label">RPE</div>
+            <div class="set-label">${ex.ogType==='cardio'||['rest_walk','mob_full','adventure','adv2','z2_run','z2_alt','long_card','z2_cool','long_cool','long_warmup','z2_warmup'].includes(ex.id) ? 'HR / Distance' : 'Weight / Load'}</div>
+            ${showRPE ? '<div class="set-label">RPE</div>' : '<div class="set-label" style="opacity:0.4;">—</div>'}
             <div></div>
           </div>
           <div id="sets-${ex.id}">
-            ${sets.map((s,i) => renderSetRow(ex.id, i, s, dk)).join('')}
+            ${sets.map((s,i) => renderSetRow(ex.id, i, s, dk, showRPE)).join('')}
           </div>
-          <button class="add-set-btn" onclick="addSet('${ex.id}','${dk}')">+ Add Set</button>
+          <button class="add-set-btn" onclick="addSet('${ex.id}','${dk}',${showRPE})">+ Add Set</button>
         </div>
       </div>`;
   }
@@ -2261,17 +2446,32 @@ function initSets(n) {
   return Array.from({length:n}, () => ({reps:'', weight:'', rpe:'', done:false}));
 }
 
-function renderSetRow(exId, i, s, dk) {
+function renderSetRow(exId, i, s, dk, showRPE = true) {
+  const rpeCell = showRPE
+    ? `<input class="set-input ${s.rpe?'filled':''}" type="text" inputmode="decimal" pattern="[0-9.]*" placeholder="RPE" value="${s.rpe||''}"
+        onchange="updateSet('${exId}',${i},'rpe',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">`
+    : `<div style="text-align:center;color:var(--muted);font-size:14px;opacity:0.4;">—</div>`;
   return `<div class="set-row" id="setrow-${exId}-${i}">
     <div class="set-num">${i+1}</div>
     <input class="set-input ${s.reps?'filled':''}" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="—" value="${s.reps||''}"
       onchange="updateSet('${exId}',${i},'reps',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
     <input class="set-input ${s.weight?'filled':''}" type="text" inputmode="decimal" pattern="[0-9.]*" placeholder="—" value="${s.weight||''}"
       onchange="updateSet('${exId}',${i},'weight',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
-    <input class="set-input ${s.rpe?'filled':''}" type="text" inputmode="decimal" pattern="[0-9.]*" placeholder="RPE" value="${s.rpe||''}"
-      onchange="updateSet('${exId}',${i},'rpe',this.value,'${dk}')" oninput="this.classList.toggle('filled',!!this.value)">
+    ${rpeCell}
     <button class="set-done-btn ${s.done?'done':''}" onclick="toggleSetDone('${exId}',${i},'${dk}')">✓</button>
   </div>`;
+}
+
+function confirmAdvance(patternKey, dk) {
+  const ok = advanceProgression(patternKey, +1);
+  if (ok) renderTracker(dk);
+}
+function dismissAdvance(patternKey, dk) {
+  // Mark dismissed for this session — stored on the progression object with the date
+  const prog = getProgression(patternKey);
+  prog.dismissedAt = dk;
+  saveState();
+  renderTracker(dk);
 }
 
 function getWdata(dk) {
@@ -2311,7 +2511,7 @@ function toggleSetDone(exId, setIdx, dk) {
   if (nowDone) startRestTimer(120);
 }
 
-function addSet(exId, dk) {
+function addSet(exId, dk, showRPE = true) {
   const w = getWdata(dk);
   if (!w.sets[exId]) w.sets[exId] = [];
   w.sets[exId].push({reps:'',weight:'',rpe:'',done:false});
@@ -2319,7 +2519,7 @@ function addSet(exId, dk) {
   const container = document.getElementById(`sets-${exId}`);
   if (container) {
     const i = w.sets[exId].length - 1;
-    container.insertAdjacentHTML('beforeend', renderSetRow(exId, i, {reps:'',weight:'',rpe:'',done:false}, dk));
+    container.insertAdjacentHTML('beforeend', renderSetRow(exId, i, {reps:'',weight:'',rpe:'',done:false}, dk, showRPE));
   }
 }
 
@@ -2764,6 +2964,7 @@ async function syncToSupabase(showMsg) {
       { user_id:'marko', key:'garmin_activities', value: state.garminActivities || [] },
       { user_id:'marko', key:'chat_history',      value: state.chatHistory || [] },
       { user_id:'marko', key:'overrides',         value: state.overrides || {} },
+      { user_id:'marko', key:'progressions',      value: state.progressions || {} },
       { user_id:'marko', key:'settings',          value: settingsToSync }
     ];
     await supabaseClient.from('app_state').upsert(stateRows, { onConflict: 'user_id,key' });
@@ -2795,6 +2996,9 @@ async function loadFromSupabase() {
         if (row.key === 'garmin_activities') state.garminActivities = row.value;
         if (row.key === 'chat_history')      state.chatHistory = row.value;
         if (row.key === 'overrides')         state.overrides = { ...state.overrides, ...row.value };
+        if (row.key === 'progressions' && row.value) {
+          state.progressions = { ...state.progressions, ...row.value };
+        }
         if (row.key === 'settings' && row.value) {
           // Restore all synced settings; keep local Supabase creds (they're the bootstrap)
           state.settings = {
@@ -2990,6 +3194,18 @@ When the user names a weekday ("Tuesday", "last Friday", "this Saturday"), resol
 IMPORTANT: This is an 8-DAY training cycle, NOT a weekly schedule. "Monday Upper 1" is NOT a reliable mapping — the cycle drifts through the calendar. Always look up the actual scheduled session for a given date from the cycle map above or via the tools.`;
 }
 
+function buildProgressionSummary() {
+  const lines = [];
+  for (const [key, ladder] of Object.entries(PROGRESSION_LADDERS)) {
+    const prog = getProgression(key);
+    const lvl = prog.levelIdx;
+    const name = ladder.levels[lvl] || '?';
+    const next = ladder.levels[lvl + 1] || '(top of ladder)';
+    lines.push(`• ${ladder.name} (${key}): Lv ${lvl + 1}/${ladder.levels.length} — ${name} → next: ${next}`);
+  }
+  return lines.join('\n');
+}
+
 function buildSystemPrompt() {
   return `You are Coach Claude — Marko's personal AI fitness coach. You are not a chatbot. You are a dynamic personal trainer with real-time access to his training calendar and the ability to modify it directly.
 
@@ -3064,31 +3280,31 @@ The CYCLE POSITION at the top of this prompt tells you what TODAY is and the nex
 • H-Push: Upper 1 volume (push-ups, sub-max) + Upper 2 strength (ring push-up progression) — H-Push *strength* lives on Upper 2 because Upper 1 already has V-Push + H-Pull as heavy work
 • V-Pull: Upper 2 strength (pull-up progression) + Upper 1 accessory (curls + dead hangs)
 • Core: L-Sit on Upper 1 + hollow holds in Upper 2 warm-up
-• Legs: Friday session + indirect from running/long-day
+• Legs: D5 session + indirect from running/long-day
 
 CNS LOAD BALANCE: Each upper day has exactly TWO heavy strength progressions + ONE volume/accessory movement of the third pattern. Never 3 progressions in one session — leads to junk volume on the last lift.
 
-PUSH/PULL BALANCE: Pull volume ≥ push volume weekly. Face pulls + pull-aparts on EVERY upper day. Non-negotiable.
+PUSH/PULL BALANCE: Pull volume ≥ push volume per cycle. Face pulls + pull-aparts on EVERY upper day. Non-negotiable.
 
-═══ STACKING & TIMING RULES ═══
+═══ STACKING & TIMING RULES (use CYCLE DAYS, not weekdays) ═══
 • Strength AM + easy cardio PM = standard, not special. Endorse it proactively.
-• Threshold (Tue) should NOT be stacked with heavy CNS strength same day — it counts as high CNS itself.
-• Long run + Legs = 2 days minimum between (currently Sat→Fri = 6 days, fine).
-• Upper 1 → Upper 2 has 1 rest day buffer (Tue threshold) — that's enough because they don't overlap movement patterns heavily.
-• 5–6 active days/week is the TARGET, not the ceiling.
+• Threshold (D2) should NOT be stacked with heavy CNS strength same day — it counts as high CNS itself.
+• Long Run (D7) → Legs (D5 next cycle) = ~5 days separation, fine.
+• Upper 1 (D1) → Upper 2 (D4) has 72h with Threshold (D2) + Easy Base (D3) in between — that's the recovery design.
+• 5–6 active days per 7 calendar days is the TARGET, not the ceiling.
 
 ═══ ADVENTURE SWAP MATRIX ═══
-When Marko reports an adventure or asks to swap, map to the closest training slot:
+When Marko reports an adventure or asks to swap, map to the closest training slot in his CURRENT or UPCOMING cycle (use the NEXT 8 DAYS list at the top):
 
-| Adventure                           | Replaces            | Notes                                      |
-|-------------------------------------|---------------------|--------------------------------------------|
-| Easy hike <2h, rolling              | Easy Base (Thu)     | Same Z2 stimulus, count as base run        |
-| Long hike 3h+, elevation            | Long Run (Sat)      | Counts as long aerobic; reduce next Legs   |
-| Easy/Z2 bike or gravel ride         | Easy Base or Long   | Distance-dependent: <90min → Base, more → Long |
-| Hard MTB (intervals, climbing)      | Threshold (Tue)     | Only if HR genuinely hit Z4+               |
-| Trail run hard / race effort        | Threshold           | Same                                       |
-| Climbing day                        | Upper 1 OR Upper 2  | Counts as pulling + skill; pick which day  |
-| Swim / paddle / surf                | Easy Base or Long   | Aerobic — slot by duration                 |
+| Adventure                           | Replaces cycle slot      | Notes                                      |
+|-------------------------------------|--------------------------|--------------------------------------------|
+| Easy hike <2h, rolling              | Easy Base (D3 or D6)     | Same Z2 stimulus, count as base run        |
+| Long hike 3h+, elevation            | Long Run (D7)            | Counts as long aerobic; reduce next Legs   |
+| Easy/Z2 bike or gravel ride         | Easy Base OR Long Run    | Distance-dependent: <90min → Base, more → Long |
+| Hard MTB (intervals, climbing)      | Threshold (D2)           | Only if HR genuinely hit Z4+               |
+| Trail run hard / race effort        | Threshold (D2)           | Same                                       |
+| Climbing day                        | Upper 1 (D1) or Upper 2 (D4) | Counts as pulling + skill; pick which day |
+| Swim / paddle / surf                | Easy Base OR Long Run    | Aerobic — slot by duration                 |
 
 When swapping, use update_schedule with the new schedIdx AND log_workout with substitution text. Always tell Marko which slot you mapped it to.
 
@@ -3123,9 +3339,15 @@ TENDON HEALTH: Tendons adapt 3-10× slower than muscles. If joints are achy → 
 
 STRAIGHT-ARM vs BENT-ARM: Never exhaust bent-arm (push-ups, pull-ups) before straight-arm skill (planche, front lever) in the same session.
 
-MARKO'S STARTING LEVELS:
-H-Push: Ring push-up | V-Push: Elevated pike push-up | H-Pull: Horizontal ring row
-V-Pull: Pull-up 5×5 | Core: Hollow body hold | Legs: BSS → box pistol
+MARKO'S CURRENT PROGRESSION LEVELS (live state — call get_progression_status for full ladder + readiness):
+${buildProgressionSummary()}
+
+ADVANCEMENT WORKFLOW:
+1. When user reports completing a session, look at the readiness_status returned by get_progression_status
+2. If status === 'ready', the app has already detected 3 clean sessions hit the criterion — recommend advance_progression(pattern, 1) and explain why
+3. If user explicitly says "I moved up" or "advance me on X", call advance_progression directly
+4. If user is struggling, regression (direction=-1) is appropriate — proactively suggest it after 2+ failed sessions
+5. The app's tracker also shows a "Ready to advance" banner with a button — the user may click it directly without going through chat
 
 ENERGY SYSTEMS (for "boundless energy"):
 • Zone 2 (HR 130-150): 3×/week minimum — mitochondrial density, all-day energy
@@ -3182,12 +3404,12 @@ Marko often stacks multiple activities on the same day — e.g. a strength sessi
 
 When you see activities listed alongside a scheduled workout, factor them into recovery:
 • Light cardio (easy cycling/run ≤1h, Zone 2) on top of a strength session = acceptable; no schedule change needed
-• Long effort (2h+ hike/ride or hard run) on a heavy CNS day = treat as combined load; next day should be rest or Zone 2 only
-• Back-to-back heavy CNS days (Push + Pull + big load activity) = flag it and suggest a buffer
+• Long effort (2h+ hike/ride or hard run) on a heavy CNS day = treat as combined load; next day should be rest or Easy Base only
+• Back-to-back heavy CNS days (Upper 1 + Upper 2 + big load activity) = flag it and suggest a buffer
 
-You may actively suggest combinations: "Do your Pull session + the bike ride this afternoon" when loading permits. Stacking light aerobic on strength days is encouraged — it builds the "boundless energy" base.
+You may actively suggest combinations: "Do your Upper 2 session + the bike ride this afternoon" when loading permits. Stacking light aerobic on strength days is encouraged — it builds the "boundless energy" base.
 
-OG RULE: never stack two heavy CNS sessions (Push/Pull/Legs) back-to-back without a Zone 2 or Rest buffer.
+OG RULE: never stack two heavy CNS sessions (Upper 1 / Upper 2 / Legs / Threshold) back-to-back without an Easy Base or Rest buffer.
 
 ═══ RECENT TRAINING LOG (last 14 days) ═══
 ${buildRecentTrainingLog(14)}
@@ -3248,24 +3470,50 @@ const AI_TOOLS = [
   },
   {
     name: 'get_progression_status',
-    description: 'Get current OG progression level and recent logged sets for a movement pattern. Call this before giving progression advice.',
+    description: 'Get current OG progression level, the full ladder, and recent logged sets for a movement pattern. Call this before giving progression advice or recommending an advance.',
     input_schema: {
       type: 'object',
       properties: {
         pattern: {
           type: 'string',
-          enum: ['h_push', 'v_push', 'h_pull', 'v_pull', 'core', 'legs'],
-          description: 'h_push=horizontal push, v_push=vertical push, h_pull=horizontal pull, v_pull=vertical pull, core=L-sit, legs=pistol squat'
+          enum: ['v_push', 'h_push', 'v_pull', 'h_pull', 'handstand', 'l_sit', 'pistol', 'nordic', 'push_vol'],
+          description: 'Pattern key matching PROGRESSION_LADDERS. v_push=vertical push, h_push=horizontal push, v_pull=vertical pull, h_pull=horizontal pull, handstand=handstand skill, l_sit=L-sit hold, pistol=pistol squat, nordic=nordic hamstring curl, push_vol=push-up volume.'
         }
       },
       required: ['pattern']
     }
+  },
+  {
+    name: 'advance_progression',
+    description: 'Advance the user to the next harder level (or regress to easier) for a movement pattern. Use when the user reports they hit the criterion cleanly (3×criterion reps at RPE ≤8 for 3 sessions running) OR when they explicitly ask to move up/down. Always call get_progression_status FIRST to confirm where they are. Regression (direction=-1) is appropriate after illness/deload or if the current level is consistently failing form.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pattern: {
+          type: 'string',
+          enum: ['v_push', 'h_push', 'v_pull', 'h_pull', 'handstand', 'l_sit', 'pistol', 'nordic', 'push_vol']
+        },
+        direction: {
+          type: 'integer',
+          enum: [1, -1],
+          description: '1 = advance to next harder variation, -1 = regress to previous easier variation'
+        },
+        reason: { type: 'string', description: 'Why this advancement (e.g. "Hit 3×8 ring push-ups 3 sessions clean")' }
+      },
+      required: ['pattern', 'direction']
+    }
   }
 ];
+
+// Valid schedIdx values the AI may schedule (0 and 2 are LEGACY — blocked here too)
+const VALID_SCHED_IDX = [1, 3, 4, 5, 6, 7, 8, 9];
 
 function executeTool(name, input) {
   switch (name) {
     case 'update_schedule': {
+      if (!VALID_SCHED_IDX.includes(input.schedIdx)) {
+        return { error: `Invalid schedIdx ${input.schedIdx}. Use 8 (Upper 1) or 9 (Upper 2) — never legacy 0 or 2.` };
+      }
       if (!state.overrides) state.overrides = {};
       state.overrides[input.date] = input.schedIdx;
       const w_us = getWdata(input.date);
@@ -3290,51 +3538,88 @@ function executeTool(name, input) {
     case 'reschedule_week': {
       if (!state.overrides) state.overrides = {};
       const applied = [];
+      const rejected = [];
       for (const change of (input.changes || [])) {
+        if (!VALID_SCHED_IDX.includes(change.schedIdx)) {
+          rejected.push({ date: change.date, schedIdx: change.schedIdx, reason: 'invalid schedIdx (0/2 are legacy)' });
+          continue;
+        }
         state.overrides[change.date] = change.schedIdx;
         const w_rw = getWdata(change.date);
-        // Always overwrite so stale notes from prior adjustments don't persist
         if (!w_rw.completed) w_rw.note = change.note || '';
         applied.push({ date: change.date, workout: TRAINING_SCHEDULE[change.schedIdx].name });
       }
       saveState();
       syncToSupabase(false);
       if (state.currentTab === 'calendar') renderCalendar();
-      return { success: true, rescheduled: applied };
+      return { success: true, rescheduled: applied, rejected };
     }
     case 'get_progression_status': {
-      const patternExIds = {
-        h_push: ['h_push', 'push_vol'], v_push: ['v_push', 'hs_hold'],
-        h_pull: ['h_pull', 'curls'], v_pull: ['v_pull', 'scap'],
-        core: ['l_sit'], legs: ['pistol', 'bss', 'nordic']
-      };
-      const progressionLevels = {
-        h_push: ['Incline push-up','Ring push-up','Archer push-up','Ring dip','Weighted ring dip'],
-        v_push: ['Pike push-up','Elevated pike push-up','HSPU negative (5s)','Wall HSPU','Freestanding HSPU'],
-        h_pull: ['Inclined ring row','Horizontal ring row','Archer row','One-arm row'],
-        v_pull: ['Pull-up 5×5','L-sit pull-up (tuck)','Archer pull-up','Weighted pull-up'],
-        core: ['Hollow body hold','Tuck L-sit on floor','L-sit on bars','L-sit on rings','V-sit'],
-        legs: ['Box squat → BSS','Wall-assisted pistol','Partial pistol','Full pistol squat']
-      };
-      const exIds = patternExIds[input.pattern] || [];
-      const recentSets = {};
+      const patternKey = input.pattern;
+      const ladder = PROGRESSION_LADDERS[patternKey];
+      if (!ladder) return { error: `Unknown pattern: ${patternKey}. Valid: ${Object.keys(PROGRESSION_LADDERS).join(', ')}` };
+      const prog = getProgression(patternKey);
+      // All exIds (new + legacy) that belong to this pattern
+      const exIds = Object.entries(EX_TO_PATTERN).filter(([_, p]) => p === patternKey).map(([id]) => id);
+      // Collect recent done sets across all matching exIds, last 28 days
+      const recentSets = [];
       const today = new Date();
-      for (let i = 0; i < 21; i++) {
+      for (let i = 0; i < 28; i++) {
         const d = new Date(today); d.setDate(today.getDate() - i);
         const dk = dateKey(d);
-        const wdata = state.workouts[dk];
-        if (wdata?.sets) {
-          for (const exId of exIds) {
-            if (wdata.sets[exId]?.length) {
-              if (!recentSets[exId]) recentSets[exId] = [];
-              const doneSets = wdata.sets[exId].filter(s => s.done);
-              if (doneSets.length) recentSets[exId].push({ date: dk, sets: doneSets });
-            }
+        const wdata = (state.workouts || {})[dk];
+        if (!wdata?.sets) continue;
+        for (const exId of exIds) {
+          if (wdata.sets[exId]?.length) {
+            const doneSets = wdata.sets[exId].filter(s => s.done);
+            if (doneSets.length) recentSets.push({ date: dk, exercise_id: exId, sets: doneSets });
           }
         }
       }
-      const levels = progressionLevels[input.pattern] || [];
-      return { pattern: input.pattern, progression_ladder: levels, current_level_index: 0, recent_logged_sets: recentSets, note: 'Level index 0 = starting level. Advance when 3×8 clean reps achieved.' };
+      // Compute readiness status from primary exId on the new program
+      const primaryExId = exIds.find(id => id.startsWith('u1_') || id.startsWith('u2_') || id === 'pistol' || id === 'nordic') || exIds[0];
+      const advStatus = primaryExId ? getAdvancementStatus(primaryExId) : { status: 'no_data' };
+      return {
+        pattern: patternKey,
+        pattern_name: ladder.name,
+        current_level_index: prog.levelIdx,
+        current_level_name: ladder.levels[prog.levelIdx],
+        next_level_name: ladder.levels[prog.levelIdx + 1] || null,
+        full_ladder: ladder.levels,
+        rep_criterion: ladder.repCriterion,
+        rpe_max: ladder.rpeMax,
+        advanced_at: prog.advancedAt,
+        readiness_status: advStatus.status, // 'ready' | 'too_soon' | 'no_data' | 'maintain' | 'dismissed' | 'not_tracked'
+        recent_logged_sets: recentSets,
+        note: advStatus.status === 'ready'
+          ? `User has hit the criterion 3 sessions in a row at RPE ≤${ladder.rpeMax}. Consider recommending advance_progression(${patternKey}, 1).`
+          : advStatus.status === 'too_soon'
+            ? 'User has logged 3 recent sessions but has not yet cleanly hit the criterion. Encourage another session at current level.'
+            : 'Not enough recent data to recommend advancement.'
+      };
+    }
+    case 'advance_progression': {
+      const ladder = PROGRESSION_LADDERS[input.pattern];
+      if (!ladder) return { error: `Unknown pattern: ${input.pattern}` };
+      const prog = getProgression(input.pattern);
+      const prevLevel = prog.levelIdx;
+      const prevName = ladder.levels[prevLevel];
+      const direction = input.direction || 1;
+      const ok = advanceProgression(input.pattern, direction);
+      if (!ok) {
+        return { error: direction > 0 ? `Already at top of ${ladder.name} ladder (${prevName})` : `Already at bottom of ${ladder.name} ladder (${prevName})` };
+      }
+      const newName = ladder.levels[prog.levelIdx];
+      if (state.currentTab === 'today') renderTracker(currentTrackerDate || todayKey());
+      return {
+        success: true,
+        pattern: input.pattern,
+        pattern_name: ladder.name,
+        from_level: prevName,
+        to_level: newName,
+        direction: direction > 0 ? 'advanced' : 'regressed',
+        reason: input.reason || ''
+      };
     }
     default:
       return { error: `Unknown tool: ${name}` };
@@ -3342,19 +3627,23 @@ function executeTool(name, input) {
 }
 
 function formatToolAction({ name, input, result }) {
-  const icons = { update_schedule:'📅', log_workout:'✅', reschedule_week:'🗓', get_progression_status:'📊' };
+  const icons = { update_schedule:'📅', log_workout:'✅', reschedule_week:'🗓', get_progression_status:'📊', advance_progression:'⬆' };
   const icon = icons[name] || '🔧';
   switch (name) {
     case 'update_schedule':
-      return `${icon} **Plan updated:** ${input.date} → ${TRAINING_SCHEDULE[input.schedIdx]?.name}`;
+      return `${icon} **Plan updated:** ${input.date} → ${TRAINING_SCHEDULE[input.schedIdx]?.name || '?'}`;
     case 'log_workout':
       return `${icon} **Logged:** ${input.date}${input.substitution ? ' · ' + input.substitution : ''}${input.completed ? ' · marked complete' : ''}`;
     case 'reschedule_week': {
       const lines = (result.rescheduled || []).map(c => `${c.date} → ${c.workout}`).join(', ');
-      return `${icon} **Week rescheduled:** ${lines || input.reason || ''}`;
+      const rej = (result.rejected || []).length ? ` (${result.rejected.length} rejected)` : '';
+      return `${icon} **Week rescheduled:** ${lines || input.reason || ''}${rej}`;
     }
     case 'get_progression_status':
-      return `${icon} **Checked progression:** ${input.pattern}`;
+      return `${icon} **Checked progression:** ${result.pattern_name || input.pattern}${result.current_level_name ? ` — Lv ${(result.current_level_index||0)+1}: ${result.current_level_name}` : ''}`;
+    case 'advance_progression':
+      if (result.error) return `${icon} **Progression unchanged:** ${result.error}`;
+      return `${icon} **${result.direction === 'advanced' ? 'Advanced' : 'Regressed'} ${result.pattern_name}:** ${result.from_level} → ${result.to_level}`;
     default:
       return `${icon} ${name}`;
   }
@@ -3508,21 +3797,27 @@ function autoResize(el) {
 }
 
 function updateWeekSummary() {
+  // Cycle-aware summary: show completion within the current 8-day cycle, not calendar week.
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - dayOfWeek);
+  const cyclePos = getCyclePosition(today); // dayNumber 1-based
+  const cfg = getCycleConfig();
+  // Cycle start = today minus (cyclePos.dayNumber - 1) days
+  const cycleStart = new Date(today);
+  cycleStart.setDate(today.getDate() - (cyclePos.dayNumber - 1));
 
-  let summary = '';
   let completed = 0;
-  for (let i = 0; i <= dayOfWeek; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const key = d.toISOString().split('T')[0];
+  for (let i = 0; i < cyclePos.dayNumber; i++) {
+    const d = new Date(cycleStart);
+    d.setDate(cycleStart.getDate() + i);
+    const key = dateKey(d);
     if (state.workouts && state.workouts[key]?.completed) { completed++; }
   }
-  summary = `${completed} workouts completed<br>This week: ${dayOfWeek + 1} days in`;
-  document.getElementById('weekSummary').innerHTML = summary;
+  const anchorDate = new Date(cfg.anchor + 'T12:00:00');
+  const summary = today < anchorDate
+    ? `Cycle starts ${cfg.anchor}<br>(legacy weekly until then)`
+    : `${completed} sessions complete<br>Cycle Day ${cyclePos.dayNumber} of ${cyclePos.length}`;
+  const el = document.getElementById('weekSummary');
+  if (el) el.innerHTML = summary;
 
   // Update equipment badges
   const eq = state.settings.equipment || {};
@@ -3594,7 +3889,7 @@ function saveSettings() {
 function updateDayCounter() {
   const start = state.settings?.programStart;
   if (start) {
-    const days = Math.floor((new Date() - new Date(start)) / 86400000) + 1;
+    const days = Math.floor((new Date() - new Date(start + 'T12:00:00')) / 86400000) + 1;
     const week = Math.ceil(days / 7);
     if (days > 0) document.getElementById('dayCounter').textContent = `🌍 Day ${days} · Week ${week}`;
   }
@@ -3653,7 +3948,7 @@ async function pullFromCloud() {
   buildActivityTable();
   renderCalendar();
   renderHistoryDynamic();
-  renderTracker(state.currentDate || todayKey());
+  renderTracker(currentTrackerDate || todayKey());
   updateWeekSummary();
   updateDayCounter();
   if (state.currentTab === 'settings') loadSettings();
