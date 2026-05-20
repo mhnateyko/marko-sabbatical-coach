@@ -344,6 +344,33 @@
   .type-prehab { background: rgba(26,122,80,0.1); color: var(--success); }
   .type-core { background: rgba(37,99,235,0.1); color: var(--accent2); }
   .type-warmup { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+  /* Exercise progression rows on Plan tab */
+  .prog-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 16px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s ease; }
+  .prog-row:hover { border-color: var(--accent); background: rgba(14,158,118,0.04); }
+  .prog-row-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .prog-row-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .prog-row-level { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(14,158,118,0.12); color: var(--accent); letter-spacing: 0.3px; text-transform: uppercase; }
+  .prog-row-sessions { display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+  .prog-row-session { display: flex; flex-direction: column; align-items: center; min-width: 38px; }
+  .prog-row-session-date { font-size: 9px; color: var(--muted); }
+  .prog-row-session-reps { font-size: 14px; font-weight: 700; color: var(--text); }
+  .prog-row-empty { font-size: 12px; color: var(--muted); font-style: italic; }
+  .prog-sparkline { display: block; }
+  .prog-row-chevron { color: var(--muted); font-size: 18px; }
+
+  /* Progression detail modal */
+  .prog-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; backdrop-filter: blur(3px); }
+  .prog-modal { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; max-width: 640px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .prog-modal-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .prog-modal-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .prog-modal-close { float: right; background: transparent; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; padding: 0 4px; }
+  .prog-modal-close:hover { color: var(--text); }
+  .prog-detail-chart { background: var(--card2); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .prog-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .prog-table th { text-align: left; font-size: 10px; font-weight: 700; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); letter-spacing: 0.4px; text-transform: uppercase; }
+  .prog-table td { padding: 9px 10px; border-bottom: 1px solid rgba(125,132,148,0.1); color: var(--text); }
+  .prog-table tr:hover td { background: rgba(14,158,118,0.04); }
   .tracker-ex-name { font-size: 14px; font-weight: 700; }
   .tracker-ex-target { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 2px; }
   .tracker-ex-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
@@ -895,6 +922,15 @@
         </div>
       </div>
       <p class="text-sm text-muted mt-3" style="line-height:1.6;font-size:11px;color:var(--muted);">Cycle anchor: <strong>May 25, 2026 (Day 1)</strong>. Calendar tab shows the actual session for each date — don't try to map by weekday.</p>
+    </div>
+
+    <!-- Exercise Progression History -->
+    <div class="card mb-6">
+      <div class="card-title">📈 Your Exercise Progression</div>
+      <p class="text-sm text-muted mb-4" style="line-height:1.6;">Top-set reps across recent sessions for each tracked movement pattern. Tap a row for full history with chart + table. Updates automatically as you log workouts.</p>
+      <div id="progressionList">
+        <div style="font-size:13px;color:var(--muted);text-align:center;padding:20px;">Loading…</div>
+      </div>
     </div>
 
     <!-- OG Progression Ladders -->
@@ -1867,6 +1903,7 @@ function switchTab(tab, dateStr) {
   if (tab === 'coach') updateWeekSummary();
   if (tab === 'settings') loadSettings();
   if (tab === 'history') renderHistoryDynamic();
+  if (tab === 'plan') renderProgressionList();
 }
 
 function openDayTracker(dateStr) {
@@ -1949,6 +1986,176 @@ function initCharts() {
   liftChart('squatChart', WORKOUT_DATA.squat_history, '#a0720e');
   liftChart('ohpChart', WORKOUT_DATA.ohp_history, '#0d7a8a');
   liftChart('legpressChart', WORKOUT_DATA.legpress_history, '#1a7a50');
+}
+
+// ====================== EXERCISE PROGRESSION VIEW (Plan tab) ======================
+// Collect all logged sessions for a given pattern across new + legacy exercise IDs.
+// Returns sorted (oldest → newest) array of { date, exId, sets, topReps, topRpe, avgReps }.
+function collectPatternHistory(patternKey) {
+  const exIds = Object.entries(EX_TO_PATTERN).filter(([_, p]) => p === patternKey).map(([id]) => id);
+  const sessions = [];
+  for (const [dk, w] of Object.entries(state.workouts || {})) {
+    if (!w?.sets) continue;
+    for (const exId of exIds) {
+      const arr = w.sets[exId];
+      if (!arr?.length) continue;
+      const doneSets = arr.filter(s => s.done && (s.reps !== '' && s.reps != null));
+      if (!doneSets.length) continue;
+      const reps = doneSets.map(s => parseFloat(s.reps) || 0);
+      const rpes = doneSets.map(s => parseFloat(s.rpe)).filter(r => !isNaN(r));
+      sessions.push({
+        date: dk,
+        exId,
+        sets: doneSets,
+        topReps: Math.max(...reps),
+        avgReps: reps.reduce((a,b) => a+b, 0) / reps.length,
+        topRpe: rpes.length ? Math.max(...rpes) : null
+      });
+    }
+  }
+  sessions.sort((a, b) => a.date.localeCompare(b.date));
+  return sessions;
+}
+
+// Render a tiny inline SVG sparkline of values (top-set reps over recent sessions).
+function renderSparkline(values, width = 80, height = 28, color = 'var(--accent)') {
+  if (!values || values.length < 2) return `<svg width="${width}" height="${height}"></svg>`;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = (max - min) || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * (width - 4) + 2;
+    const y = height - 2 - ((v - min) / range) * (height - 6);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const last = pts[pts.length - 1].split(',');
+  return `<svg class="prog-sparkline" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <polyline fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" points="${pts.join(' ')}"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="2.4" fill="${color}"/>
+  </svg>`;
+}
+
+// Render a larger labeled SVG line chart for the detail modal.
+function renderFullChart(sessions) {
+  if (!sessions.length) return '<div style="color:var(--muted);font-size:13px;padding:24px;text-align:center;">No sessions logged yet for this pattern.</div>';
+  const W = 560, H = 220, PAD_L = 36, PAD_R = 12, PAD_T = 14, PAD_B = 32;
+  const reps = sessions.map(s => s.topReps);
+  const min = 0;
+  const max = Math.max(...reps) * 1.15 || 10;
+  const xStep = sessions.length > 1 ? (W - PAD_L - PAD_R) / (sessions.length - 1) : 0;
+  const yFor = v => H - PAD_B - ((v - min) / (max - min)) * (H - PAD_T - PAD_B);
+  const xFor = i => PAD_L + i * xStep;
+  // Gridlines
+  let grid = '';
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const v = min + ((max - min) / ticks) * i;
+    const y = yFor(v);
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W-PAD_R}" y2="${y}" stroke="rgba(125,132,148,0.15)" stroke-width="1"/>`;
+    grid += `<text x="${PAD_L-6}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(v)}</text>`;
+  }
+  // Line
+  const pts = sessions.map((s, i) => `${xFor(i).toFixed(1)},${yFor(s.topReps).toFixed(1)}`).join(' ');
+  // Points + date labels (every Nth to avoid crowding)
+  let dots = '';
+  const labelEvery = Math.max(1, Math.ceil(sessions.length / 6));
+  sessions.forEach((s, i) => {
+    const cx = xFor(i), cy = yFor(s.topReps);
+    dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="var(--accent)"/>`;
+    if (i % labelEvery === 0 || i === sessions.length - 1) {
+      const label = s.date.slice(5); // MM-DD
+      dots += `<text x="${cx.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="10" fill="var(--muted)">${label}</text>`;
+    }
+  });
+  return `<svg width="100%" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto;">
+    ${grid}
+    <polyline fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderProgressionList() {
+  const container = document.getElementById('progressionList');
+  if (!container) return;
+  let html = '';
+  for (const [patternKey, ladder] of Object.entries(PROGRESSION_LADDERS)) {
+    const prog = getProgression(patternKey);
+    const sessions = collectPatternHistory(patternKey);
+    const recent = sessions.slice(-5); // last 5
+    const levelName = ladder.levels[prog.levelIdx] || '?';
+    let body;
+    if (!recent.length) {
+      body = `<div class="prog-row-empty">No sessions logged yet</div>`;
+    } else {
+      const sessionChips = recent.map(s => `
+        <div class="prog-row-session" title="${s.date} · ${s.sets.length} sets · top ${s.topReps} reps${s.topRpe ? ' · RPE ' + s.topRpe : ''}">
+          <div class="prog-row-session-reps">${s.topReps}</div>
+          <div class="prog-row-session-date">${s.date.slice(5)}</div>
+        </div>`).join('');
+      const spark = renderSparkline(recent.map(s => s.topReps));
+      body = `
+        <div class="prog-row-sessions">${sessionChips}</div>
+        <div style="margin-top:8px;">${spark}<span style="font-size:10px;color:var(--muted);margin-left:8px;">top reps over last ${recent.length}</span></div>`;
+    }
+    html += `
+      <div class="prog-row" onclick="openProgressionDetail('${patternKey}')">
+        <div style="min-width:0;">
+          <div class="prog-row-head">
+            <div class="prog-row-name">${ladder.name}</div>
+            <div class="prog-row-level">Lv ${prog.levelIdx + 1}/${ladder.levels.length}: ${levelName}</div>
+          </div>
+          ${body}
+        </div>
+        <div class="prog-row-chevron">›</div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function openProgressionDetail(patternKey) {
+  const ladder = PROGRESSION_LADDERS[patternKey];
+  if (!ladder) return;
+  const prog = getProgression(patternKey);
+  const sessions = collectPatternHistory(patternKey);
+  document.querySelectorAll('.prog-modal-overlay').forEach(el => el.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'prog-modal-overlay';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  const tableRows = sessions.length
+    ? sessions.slice().reverse().map(s => {
+        const setStrs = s.sets.map(st => `${st.reps || '?'}${st.rpe ? '@'+st.rpe : ''}`).join(' · ');
+        return `<tr>
+          <td>${s.date}</td>
+          <td><strong>${s.topReps}</strong></td>
+          <td style="color:var(--muted);font-size:12px;">${setStrs}</td>
+          <td>${s.topRpe || '—'}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">No sessions logged yet for this pattern.</td></tr>`;
+  const advanced = prog.advancedAt
+    ? `Last advanced: ${prog.advancedAt}`
+    : 'Starting at this level — no advancement yet';
+  overlay.innerHTML = `
+    <div class="prog-modal" onclick="event.stopPropagation()">
+      <button class="prog-modal-close" onclick="this.closest('.prog-modal-overlay').remove()">×</button>
+      <div class="prog-modal-title">${ladder.name}</div>
+      <div class="prog-modal-subtitle">Lv ${prog.levelIdx + 1}/${ladder.levels.length}: <strong style="color:var(--text);">${ladder.levels[prog.levelIdx]}</strong> · ${advanced}</div>
+      <div class="prog-detail-chart">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Top-Set Reps Over Time</div>
+        ${renderFullChart(sessions)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Session History (${sessions.length})</div>
+      <table class="prog-table">
+        <thead>
+          <tr><th>Date</th><th>Top Reps</th><th>Sets (reps@rpe)</th><th>Top RPE</th></tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6;">
+        Advance criterion: top-set ≥ <strong style="color:var(--text);">${ladder.repCriterion}${ladder.holdBased ? 's' : ' reps'}</strong> at RPE ≤ ${ladder.rpeMax} for 3 consecutive sessions. Next level: <strong style="color:var(--text);">${ladder.levels[prog.levelIdx + 1] || '(top of ladder)'}</strong>.
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 // ====================== DYNAMIC HISTORY TAB ======================
@@ -2464,7 +2671,10 @@ function renderSetRow(exId, i, s, dk, showRPE = true) {
 
 function confirmAdvance(patternKey, dk) {
   const ok = advanceProgression(patternKey, +1);
-  if (ok) renderTracker(dk);
+  if (ok) {
+    renderTracker(dk);
+    if (document.getElementById('progressionList')) renderProgressionList();
+  }
 }
 function dismissAdvance(patternKey, dk) {
   // Mark dismissed for this session — stored on the progression object with the date
@@ -3611,6 +3821,7 @@ function executeTool(name, input) {
       }
       const newName = ladder.levels[prog.levelIdx];
       if (state.currentTab === 'today') renderTracker(currentTrackerDate || todayKey());
+      if (state.currentTab === 'plan') renderProgressionList();
       return {
         success: true,
         pattern: input.pattern,
@@ -3948,6 +4159,7 @@ async function pullFromCloud() {
   buildActivityTable();
   renderCalendar();
   renderHistoryDynamic();
+  renderProgressionList();
   renderTracker(currentTrackerDate || todayKey());
   updateWeekSummary();
   updateDayCounter();
