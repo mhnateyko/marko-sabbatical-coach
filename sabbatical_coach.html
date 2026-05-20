@@ -848,47 +848,53 @@
       </div>
     </div>
 
-    <!-- Weekly Template -->
+    <!-- 8-Day Training Cycle -->
     <div class="card mb-6">
-      <div class="card-title">Weekly Template — Flexible Around Adventures</div>
-      <p class="text-sm text-muted mb-4" style="line-height:1.6;">This is a <em>template</em>, not a rigid schedule. If you're hiking all day, that counts as leg day + cardio. If you go mountain biking, that's cardio. Tell your AI Coach what you actually did and it will adapt the plan.</p>
+      <div class="card-title">8-Day Training Cycle — Flexible Around Adventures</div>
+      <p class="text-sm text-muted mb-4" style="line-height:1.6;">This is an <strong style="color:var(--text);">8-day cycle</strong>, not a weekly schedule. It drifts through the calendar, so "today" might be any cycle day depending on the date. Designed for 72h between upper sessions + 48h+ between leg-loading sessions. Tell your AI Coach what you actually did and it adapts the plan — adventures count as training.</p>
       <div class="week-grid">
         <div class="day-card">
-          <div class="day-name">Mon</div>
+          <div class="day-name">D1</div>
           <div class="day-type push">Upper Body 1</div>
           <div class="day-detail">L-Sit · V-Push Prog · H-Pull Prog · Push-up Volume · Curls · Prehab</div>
         </div>
         <div class="day-card">
-          <div class="day-name">Tue</div>
+          <div class="day-name">D2</div>
           <div class="day-type cardio">Threshold</div>
           <div class="day-detail">Zone 4 intervals or tempo · 20–35 min</div>
         </div>
         <div class="day-card">
-          <div class="day-name">Wed</div>
+          <div class="day-name">D3</div>
+          <div class="day-type cardio">Easy Base</div>
+          <div class="day-detail">3–4 mi easy · HR 130–150 · recovery between upper days</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">D4</div>
           <div class="day-type pull">Upper Body 2</div>
           <div class="day-detail">Handstand · V-Pull Prog · H-Push Prog · Pull-Aparts · Prehab</div>
         </div>
         <div class="day-card">
-          <div class="day-name">Thu</div>
-          <div class="day-type cardio">Easy Base</div>
-          <div class="day-detail">3–4 mi easy run · HR 130–150 · or Z2 swap</div>
-        </div>
-        <div class="day-card">
-          <div class="day-name">Fri</div>
+          <div class="day-name">D5</div>
           <div class="day-type legs">Lower Body</div>
           <div class="day-detail">Pistol · BSS · Nordic · Jump Squat · Calves</div>
         </div>
         <div class="day-card">
-          <div class="day-name">Sat</div>
+          <div class="day-name">D6</div>
+          <div class="day-type cardio">Easy Base</div>
+          <div class="day-detail">3–4 mi easy · recovery between legs and long</div>
+        </div>
+        <div class="day-card">
+          <div class="day-name">D7</div>
           <div class="day-type cardio">Long Run / Adventure</div>
           <div class="day-detail">60–90 min Z2 or 2–5h hike / bike / climb</div>
         </div>
         <div class="day-card">
-          <div class="day-name">Sun</div>
+          <div class="day-name">D8</div>
           <div class="day-type rest">Rest</div>
           <div class="day-detail">Walk, stretch, mobility</div>
         </div>
       </div>
+      <p class="text-sm text-muted mt-3" style="line-height:1.6;font-size:11px;color:var(--muted);">Cycle anchor: <strong>May 25, 2026 (Day 1)</strong>. Calendar tab shows the actual session for each date — don't try to map by weekday.</p>
     </div>
 
     <!-- OG Progression Ladders -->
@@ -1295,6 +1301,11 @@
           <div class="form-help">Used to calculate which week of your program you're in</div>
         </div>
         <div class="form-group">
+          <label class="form-label">8-Day Cycle Anchor (Day 1 = Upper 1)</label>
+          <input type="date" class="form-input" id="cycleAnchor">
+          <div class="form-help">The date that "Day 1 — Upper Body 1" lands on. The cycle drifts from this anchor. Default: 2026-05-25.</div>
+        </div>
+        <div class="form-group">
           <label class="form-label">Your Name</label>
           <input type="text" class="form-input" id="userName" value="Marko" placeholder="Marko">
         </div>
@@ -1592,12 +1603,47 @@ function resolveExercise(ex) {
 // ====================== HELPERS ======================
 function dateKey(d) { return d.toISOString().split('T')[0]; }
 function todayKey() { return dateKey(new Date()); }
+// ====================== TRAINING CYCLE (8-day, not weekly) ======================
+// Rationale: 7-day cycle can't satisfy 72h between upper sessions AND 48h between leg-loading
+// sessions given the volume (2 upper + 1 legs + 3 cardio + 1 rest). 8-day cycle solves it.
+// D1: Upper 1 | D2: Threshold | D3: Easy Base | D4: Upper 2 | D5: Legs | D6: Easy Base | D7: Long Run | D8: Rest
+const CYCLE_DEFAULTS = {
+  anchor: '2026-05-25',                     // Day 1 of cycle (a Monday; cycle drifts from here)
+  length: 8,
+  schedule: [8, 7, 1, 9, 4, 1, 5, 6],       // schedIdx per cycle day (0-indexed: schedule[0] = Day 1)
+  dayLabels: ['Upper 1', 'Threshold', 'Easy Base', 'Upper 2', 'Lower Body', 'Easy Base', 'Long Run / Adventure', 'Rest']
+};
+
+function getCycleConfig() {
+  return {
+    anchor: state.settings?.cycleAnchor || CYCLE_DEFAULTS.anchor,
+    length: state.settings?.cycleLength || CYCLE_DEFAULTS.length,
+    schedule: state.settings?.cycleSchedule || CYCLE_DEFAULTS.schedule
+  };
+}
+
+function getCyclePosition(d) {
+  const cfg = getCycleConfig();
+  const anchor = new Date(cfg.anchor + 'T12:00:00');
+  const target = new Date(dateKey(d) + 'T12:00:00');
+  const dayDiff = Math.floor((target - anchor) / 86400000);
+  const pos = ((dayDiff % cfg.length) + cfg.length) % cfg.length;
+  return { pos, length: cfg.length, dayNumber: pos + 1 };
+}
+
 function getScheduleForDate(d) {
-  // Mon=Upper1(8), Tue=Threshold(7), Wed=Upper2(9), Thu=EasyBase(1), Fri=Legs(4), Sat=LongRun(5), Sun=Rest(6)
-  const map = [6,8,7,9,1,4,5]; // JS Sunday=0 → schedule index
   const override = state.overrides && state.overrides[dateKey(d)];
   if (override !== undefined) return TRAINING_SCHEDULE[override];
-  return TRAINING_SCHEDULE[map[d.getDay()]];
+  const cfg = getCycleConfig();
+  const anchor = new Date(cfg.anchor + 'T12:00:00');
+  const target = new Date(dateKey(d) + 'T12:00:00');
+  // Pre-anchor dates use the legacy weekly mapping for historical continuity
+  if (target < anchor) {
+    const legacyMap = [6,8,7,9,1,4,5]; // Sun→Sat
+    return TRAINING_SCHEDULE[legacyMap[d.getDay()]];
+  }
+  const { pos } = getCyclePosition(d);
+  return TRAINING_SCHEDULE[cfg.schedule[pos]];
 }
 function fmtDate(d) { return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}); }
 function fmtDateShort(d) { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
@@ -2913,11 +2959,35 @@ function buildDateAnchor() {
     const d = new Date(today); d.setDate(today.getDate() - i);
     lastWeek.push(`${fmt(d)} (${fmtIso(d)})`);
   }
+  // Build cycle position view for next 8 days
+  const cfg = getCycleConfig();
+  const anchorDate = new Date(cfg.anchor + 'T12:00:00');
+  const isPreAnchor = today < anchorDate;
+  const cyclePos = getCyclePosition(today);
+  const cycleLines = [];
+  for (let i = 0; i < cfg.length; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const sched = getScheduleForDate(d); // honors pre-anchor fallback
+    const p = getCyclePosition(d);
+    const tag = i === 0 ? ' ← TODAY' : '';
+    const inCycle = d >= anchorDate;
+    const dayLabel = inCycle ? `D${p.dayNumber}/${p.length}` : `pre-cycle`;
+    cycleLines.push(`  ${dayLabel}: ${fmt(d)} (${fmtIso(d)}) → ${sched.name}${tag}`);
+  }
+  const cycleHeader = isPreAnchor
+    ? `CYCLE STARTS: ${cfg.anchor} (Day 1 = Upper 1). Today is BEFORE cycle anchor — legacy weekly schedule applies until then.`
+    : `CYCLE POSITION: Day ${cyclePos.dayNumber} of ${cyclePos.length} (anchor: ${cfg.anchor})`;
   return `TODAY: ${todayStr} · ISO ${iso}
+${cycleHeader}
 THIS WEEK (Mon→Sun): ${week.join(' | ')}
 LAST 7 DAYS: ${lastWeek.join(' | ')}
 
-When the user names a weekday ("Tuesday", "last Friday", "this Saturday"), resolve it to a specific ISO date from the lists above. Never assume what week they mean — if it's ambiguous (e.g., "Saturday" could be past or upcoming), ask, but default to UPCOMING for future-tense and PAST for past-tense reports.`;
+NEXT ${cfg.length} DAYS (current cycle position):
+${cycleLines.join('\n')}
+
+When the user names a weekday ("Tuesday", "last Friday", "this Saturday"), resolve it to a specific ISO date from the lists above. Never assume what week they mean — if it's ambiguous (e.g., "Saturday" could be past or upcoming), ask, but default to UPCOMING for future-tense and PAST for past-tense reports.
+
+IMPORTANT: This is an 8-DAY training cycle, NOT a weekly schedule. "Monday Upper 1" is NOT a reliable mapping — the cycle drifts through the calendar. Always look up the actual scheduled session for a given date from the cycle map above or via the tools.`;
 }
 
 function buildSystemPrompt() {
@@ -2970,16 +3040,23 @@ Pull-ups: 5×5 bodyweight — strong vertical pull base
 Running: 3–5 mi base ~9:10/mile, threshold ~8:36/mile; also cycles and hikes regularly
 Exceptional leg strength — well-positioned for hiking, pistol squats, adventure activities
 
-═══ WEEKLY TEMPLATE (current program — May 2026 onward) ═══
-Mon: Upper Body 1 (8) — V-Push/H-Pull strength + L-Sit skill
-Tue: Threshold Cardio (7) — Zone 4, HR 160–175, 20–35 min
-Wed: Upper Body 2 (9) — Handstand + V-Pull strength + Push-up volume
-Thu: Easy Base Run (1) — 3–4 mi Zone 2, HR 130–150
-Fri: Lower Body (4) — pistol + BSS + nordic + jump squats
-Sat: Long Run / Adventure (5) — 60–90 min Z2 OR hike/bike/climb/paddle (2–5h)
-Sun: Rest + Recover (6) — mobility, easy walk only
+═══ 8-DAY TRAINING CYCLE (current program — May 2026 onward) ═══
+This is a CYCLE, not a 7-day week. The cycle drifts through the calendar — don't assume "Monday = Upper 1".
+
+D1: Upper Body 1 (8) — V-Push/H-Pull strength + L-Sit skill + push-up volume
+D2: Threshold Cardio (7) — Zone 4, HR 160–175, 20–35 min
+D3: Easy Base Run (1) — 3–4 mi Zone 2 (recovery between upper days)
+D4: Upper Body 2 (9) — Handstand + V-Pull strength + H-Push strength
+D5: Lower Body (4) — pistol + BSS + nordic + jump squats
+D6: Easy Base Run (1) — 3–4 mi Zone 2 (recovery between legs and long)
+D7: Long Run / Adventure (5) — 60–90 min Z2 OR 2–5h hike/bike/climb/paddle
+D8: Rest + Recover (6) — mobility, easy walk only
+
+WHY 8-DAY: gives 72h between upper sessions (D1→D4) AND keeps Legs/Threshold/Long all 48h+ apart. Cannot achieve both in a 7-day cycle.
 
 LEGACY indices: 0 (Upper Push) and 2 (Upper Pull) are the OLD program. Do NOT schedule them. Use 8 and 9.
+
+The CYCLE POSITION at the top of this prompt tells you what TODAY is and the next 8 days. Always use it as the source of truth, not weekday-name assumptions.
 
 ═══ MOVEMENT PATTERN FREQUENCY (each pattern 2×/week) ═══
 • V-Push: Upper 1 strength (HSPU progression) + Upper 2 skill (handstand)
@@ -3465,6 +3542,7 @@ function loadSettings() {
   // Prefer state.settings.apiKey; fall back to old separate localStorage key for migration
   document.getElementById('apiKeyInput').value = s.apiKey || localStorage.getItem('marko_api_key') || '';
   document.getElementById('programStart').value = s.programStart || '';
+  document.getElementById('cycleAnchor').value = s.cycleAnchor || CYCLE_DEFAULTS.anchor;
   document.getElementById('userName').value = s.userName || 'Marko';
   document.getElementById('modelSelect').value = s.model || 'claude-sonnet-4-6';
   const eq = s.equipment || {};
@@ -3488,6 +3566,7 @@ function saveSettings() {
   state.settings = {
     apiKey: apiKey,
     programStart: document.getElementById('programStart').value,
+    cycleAnchor: document.getElementById('cycleAnchor').value || CYCLE_DEFAULTS.anchor,
     userName: document.getElementById('userName').value || 'Marko',
     model: document.getElementById('modelSelect').value,
     equipment: {
