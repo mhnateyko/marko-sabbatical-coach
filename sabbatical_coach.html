@@ -1789,6 +1789,11 @@ function getAdvancementStatus(exId) {
 // ====================== HELPERS ======================
 function dateKey(d) { return d.toISOString().split('T')[0]; }
 function todayKey() { return dateKey(new Date()); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 // ====================== TRAINING CYCLE (8-day, not weekly) ======================
 // Rationale: 7-day cycle can't satisfy 72h between upper sessions AND 48h between leg-loading
 // sessions given the volume (2 upper + 1 legs + 3 cardio + 1 rest). 8-day cycle solves it.
@@ -1841,6 +1846,7 @@ let state = {
   workouts: {},      // { [dateKey]: { sets: { [exId]: [{reps,weight,done}] }, note, completed, substitution } }
   overrides: {},     // { [dateKey]: schedIdx } — if user changed what type a day is
   progressions: {},  // { [patternKey]: { levelIdx, advancedAt, history } }
+  exerciseNotes: {}, // { [dateKey]: { [exId]: 'free-form note like blue band, low chair' } }
   settings: {},
   currentTab: 'calendar'
 };
@@ -1857,6 +1863,7 @@ function loadState() {
   if (!state.workouts) state.workouts = {};
   if (!state.overrides) state.overrides = {};
   if (!state.progressions) state.progressions = {};
+  if (!state.exerciseNotes) state.exerciseNotes = {};
   if (!state.chatHistory) state.chatHistory = [];
   // Auto-migrate: move API key from old separate localStorage key into state.settings
   if (!state.settings) state.settings = {};
@@ -2537,6 +2544,26 @@ function renderTracker(dk) {
     // RPE column is meaningless for warmup and prehab (no failure-tracking)
     const showRPE = ex.ogType !== 'warmup' && ex.ogType !== 'prehab';
 
+    // Prior session reference + current notes field
+    const prior = getPriorSession(rawEx.id, dk);
+    let priorBlock = '';
+    if (prior) {
+      const setStr = prior.sets.map(s => `${s.reps || '?'}${s.rpe ? '@'+s.rpe : ''}`).join(' · ');
+      const priorNote = prior.note ? `<span style="margin-left:10px;color:var(--text);">📝 <em>${escapeHtml(prior.note)}</em></span>` : '';
+      priorBlock = `<div style="margin:8px 0 4px;padding:7px 11px;background:rgba(125,132,148,0.06);border-left:2px solid var(--muted);border-radius:0 6px 6px 0;font-size:11px;color:var(--muted);line-height:1.5;">
+        <strong style="color:var(--text);">Last (${prior.date.slice(5)}):</strong> ${setStr}${priorNote}
+      </div>`;
+    }
+    const currentNote = getExerciseNote(dk, rawEx.id);
+    const notesBlock = `<div style="margin-top:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);display:block;margin-bottom:4px;">Notes <span style="font-weight:400;text-transform:none;">(band color, elevation surface, anything one-off)</span></label>
+      <input type="text" id="exnote-${rawEx.id}-${dk}"
+        value="${escapeHtml(currentNote)}"
+        placeholder="${prior?.note ? 'Last: ' + escapeHtml(prior.note) : 'e.g. blue band, low chair, rings at chest'}"
+        onchange="setExerciseNote('${dk}','${rawEx.id}',this.value)"
+        style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;">
+    </div>`;
+
     html += `
       <div class="tracker-exercise" id="exblock-${rawEx.id}" style="${exDone ? 'border-color:rgba(34,197,94,0.4)' : ''}">
         <div class="tracker-ex-header">
@@ -2558,6 +2585,7 @@ function renderTracker(dk) {
           </div>
         </div>
         ${advanceBanner}
+        ${priorBlock}
         <div class="set-table">
           <div class="set-row${showRPE ? '' : ' set-row-no-rpe'}" style="margin-bottom:4px;">
             <div class="set-label">#</div>
@@ -2571,6 +2599,7 @@ function renderTracker(dk) {
           </div>
           <button class="add-set-btn" onclick="addSet('${ex.id}','${dk}',${showRPE})">+ Add Set</button>
         </div>
+        ${notesBlock}
       </div>`;
   }
 
@@ -2688,6 +2717,36 @@ function getWdata(dk) {
   if (!state.workouts[dk]) state.workouts[dk] = { sets:{}, note:'', completed:false, substitution:'', activities:[] };
   if (!state.workouts[dk].activities) state.workouts[dk].activities = []; // backward compat
   return state.workouts[dk];
+}
+
+function getExerciseNote(dk, exId) {
+  return state.exerciseNotes?.[dk]?.[exId] || '';
+}
+
+function setExerciseNote(dk, exId, value) {
+  if (!state.exerciseNotes) state.exerciseNotes = {};
+  if (!state.exerciseNotes[dk]) state.exerciseNotes[dk] = {};
+  const v = (value || '').trim();
+  if (v) state.exerciseNotes[dk][exId] = v;
+  else delete state.exerciseNotes[dk][exId];
+  // Tidy empty date buckets
+  if (Object.keys(state.exerciseNotes[dk]).length === 0) delete state.exerciseNotes[dk];
+  saveState();
+  syncToSupabase(false);
+}
+
+// Find the most recent prior session for an exercise (before `currentDk`).
+// Returns { date, sets, note } or null.
+function getPriorSession(exId, currentDk) {
+  const dates = Object.keys(state.workouts || {}).filter(d => d < currentDk).sort().reverse();
+  for (const dk of dates) {
+    const arr = state.workouts[dk]?.sets?.[exId];
+    if (!arr?.length) continue;
+    const doneSets = arr.filter(s => s.done && s.reps !== '' && s.reps != null);
+    if (!doneSets.length) continue;
+    return { date: dk, sets: doneSets, note: getExerciseNote(dk, exId) };
+  }
+  return null;
 }
 
 function updateSet(exId, setIdx, field, value, dk) {
@@ -3175,6 +3234,7 @@ async function syncToSupabase(showMsg) {
       { user_id:'marko', key:'chat_history',      value: state.chatHistory || [] },
       { user_id:'marko', key:'overrides',         value: state.overrides || {} },
       { user_id:'marko', key:'progressions',      value: state.progressions || {} },
+      { user_id:'marko', key:'exercise_notes',    value: state.exerciseNotes || {} },
       { user_id:'marko', key:'settings',          value: settingsToSync }
     ];
     await supabaseClient.from('app_state').upsert(stateRows, { onConflict: 'user_id,key' });
@@ -3208,6 +3268,9 @@ async function loadFromSupabase() {
         if (row.key === 'overrides')         state.overrides = { ...state.overrides, ...row.value };
         if (row.key === 'progressions' && row.value) {
           state.progressions = { ...state.progressions, ...row.value };
+        }
+        if (row.key === 'exercise_notes' && row.value) {
+          state.exerciseNotes = { ...state.exerciseNotes, ...row.value };
         }
         if (row.key === 'settings' && row.value) {
           // Restore all synced settings; keep local Supabase creds (they're the bootstrap)
